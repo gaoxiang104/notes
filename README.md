@@ -1,7 +1,7 @@
 # noters
 
-## [Todo List](./TODO.md)
+## [1. Todo List](./TODO.md)
 
-## 读书
+## 2. 读书笔记
 
-### [鸟哥的 Linux 私房菜 -- 基础](./studyNotes/鸟哥Linux)
+* [鸟哥的 Linux 私房菜 -- 基础](./readingNotes/鸟哥Linux)
