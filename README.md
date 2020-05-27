@@ -1,4 +1,4 @@
-# noters
+# notes
 
 ## [1. Todo List](./TODO.md)
 
