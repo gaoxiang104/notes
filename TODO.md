@@ -5,12 +5,19 @@
 
 ## some things I want to do
 
-* 树莓派 : 安装v2ray
-* 树莓派 : docker独立IP
+* 树莓派 : docker安装nginx
+
+## 2020-05-30
+
+* ☐ 树莓派 : docker安装mysql
+
+## 2020-05-29
+
+* ☑︎ 树莓派 : 安装v2ray
 
 ## 2020-05-28
 
-* ☐  树莓派 : 安装docker
+* ☑︎ 树莓派 : 安装docker
 
 ## 2020-05-27
 
