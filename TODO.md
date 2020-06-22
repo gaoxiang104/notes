@@ -6,10 +6,11 @@
 ## some things I want to do
 
 * 树莓派 : docker安装nginx
+* 树莓派 : docker安装redis
 
 ## 2020-05-30
 
-* ☐ 树莓派 : docker安装mysql
+* ☑︎ 树莓派 : docker安装mysql
 
 ## 2020-05-29
 
