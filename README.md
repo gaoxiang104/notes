@@ -9,4 +9,4 @@
 
 ## 3. 学习笔记
 
-* [React学习](./reactNotes\README.md)
+* [React学习](./reactNotes/README.md)
