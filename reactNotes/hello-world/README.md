@@ -29,6 +29,17 @@
       - [3.4.2、渲染组件](#342渲染组件)
       - [3.4.3、组合组件](#343组合组件)
       - [3.4.4、提取组件](#344提取组件)
+      - [3.4.5、Props 的只读性](#345props-的只读性)
+    - [3.5、State & 生命周期](#35state--生命周期)
+      - [3.5.1、将函数组件转换成class组件](#351将函数组件转换成class组件)
+      - [3.5.2、向 class 组件中添加局部的 state](#352向-class-组件中添加局部的-state)
+      - [3.5.3、将生命周期方法添加到 Class 中](#353将生命周期方法添加到-class-中)
+      - [3.5.4、正确地使用 State](#354正确地使用-state)
+        - [3.5.4.1、 不要直接修改 State](#3541-不要直接修改-state)
+        - [3.5.4.2、 State 的更新可能是异步的](#3542-state-的更新可能是异步的)
+        - [3.5.4.3、State 的更新会被合并](#3543state-的更新会被合并)
+      - [3.5.5、数据是向下流动的](#355数据是向下流动的)
+    - [3.6、事件处理](#36事件处理)
 
 ## 1、React 是什么？
 
@@ -465,8 +476,374 @@ ReactDOM.render(
 function Comment(props){
   return (
     <div className="Comment">
-    
+      <div className="UserInfo">
+        <img className="Avatar" 
+          src={props.author.avatarUrl}
+          alt={props.author.name}
+        />
+        <div className="UserInfo-name">
+          {props.author.name}
+        </div>
+      </div>
+      <div className="Comment-text">
+        {props.text} 
+      </div>
+      <div className="Comment-date">
+        {formatDate(props.date)}
+      </div>
     </div>
   )
 }
 ```
+
+该组件用于描述一个社交媒体网站上的评论功能，它接收 `author`（对象），`text` （字符串）以及 `date`（日期）作为 `props`。
+
+该组件由于嵌套的关系，变得难以维护，且很难复用它的各个部分。因此，让我们从中提取一些组件出来。
+
+首先，我们将提取 Avatar 组件：
+
+``` jsx
+function Avatar(props){
+  return(
+    <img className="Avatar" 
+          src={props.user.avatarUrl}
+          alt={props.user.name}
+        />
+  )
+}
+```
+
+`Avatar` 不需知道它在 `Comment` 组件内部是如何渲染的。因此，我们给它的props起了一个更通用的名字： `user` ，而不是 `author` 。
+
+> 我们建议从组建自身的角度命名props，而不是依赖于调用组件的上下文命名。
+
+我们现在针对 `Comment` 做些微小调整：
+
+``` jsx
+function Comment(props){
+  return (
+    <div className="Comment">
+      <div className="UserInfo">
+        <Avatar user={props.author} />
+        <div className="UserInfo-name">
+          {props.author.name}
+        </div>
+      </div>
+      <div className="Comment-text">
+        {props.text} 
+      </div>
+      <div className="Comment-date">
+        {formatDate(props.date)}
+      </div>
+    </div>
+  )
+}
+```
+
+接下来，我们将提取 `UserInfo` 组件，该组件在用户名旁渲染 `Avatar` 组件：
+
+``` jsx
+function UserInfo(props){
+  return (
+    <div>
+      <Avatar user={props.user} />
+      <div className="UserInfo-name">
+          {props.user.name}
+        </div>
+    </div>
+  )
+}
+```
+
+进一步简化 `Comment` 组件：
+
+``` jsx
+function Comment(props){
+  return (
+    <div className="Comment">
+      <UserInfo user={props.author} />
+      <div className="Comment-text">
+        {props.text} 
+      </div>
+      <div className="Comment-date">
+        {formatDate(props.date)}
+      </div>
+    </div>
+  )
+}
+```
+
+最初看上去，提取组件可能是一件繁重的工作，但是，在大型应用中，构建可复用组件库是完全值得的。根据经验来看，如果 UI 中有一部分被多次使用（`Button`，`Panel`，`Avatar`），或者组件本身就足够复杂（`App`，`FeedStory`，`Comment`），那么它就是一个可提取出独立组件的候选项。
+
+#### 3.4.5、Props 的只读性
+
+组件无论是使用[函数声明还是通过 class 声明](https://zh-hans.reactjs.org/docs/components-and-props.html#function-and-class-components)，都决不能修改自身的 props。来看下这个 `sum` 函数：
+
+``` javascript
+function sum(a, b) {
+  return a + b;
+}
+```
+
+这样的函数被称为“纯函数”，因为该函数不会尝试更改入参，且多次调用下相同的入参始终返回相同的结果。
+
+相反，下面这个函数则不是纯函数，因为它更改了自己的入参：
+
+``` javascript
+function withdraw(account, amount) {
+  account.total -= amount;
+}
+```
+
+React 非常灵活，但它也有一个严格的规则：
+
+> **所有 React 组件都必须像纯函数一样保护它们的 props 不被更改。**
+
+### 3.5、State & 生命周期
+
+本页面介绍了 React 组件中 state 和生命周期的概念。你可以查阅[详细的组件 API 参考文档](https://zh-hans.reactjs.org/docs/react-component.html)。
+
+在本章节中，我们将学习如何封装真正可复用的 Clock 组件。它将设置自己的计时器并每秒更新一次。
+
+#### 3.5.1、将函数组件转换成class组件
+
+通过以下五步将 `Clock` 的函数组件转成class组件：
+
+1. 创建一个同名的 ES6 class，并且继承于 `React.Component`。
+2. 添加一个空的 `render()` 方法。
+3. 将函数体移动到 `render()` 方法之中。
+4. 在 `render()` 方法中使用 `this.props` 替换 `props` 。
+5. 删除剩余的空函数声明。
+
+``` jsx
+class Clock extends React.Component {
+  render(){
+    return (
+      <div>
+        <h1>Hello, world!</h1>
+        <h2>It is {this.props.data.toLocaleTimeString()}</h2>
+      </div>
+    )
+  }
+}
+```
+
+现在 `Clock`组件被定义为 class， 而不是函数。
+
+每次组件更新时 `render` 方法都会被调用，但只要在相同的 DOM 节点中渲染 `<Clock />`，就仅有一个 `Clock` 组建的 class 实例被创建使用。这就使得我们可以使用如 state 或生命周期方法等很多其他特性。
+
+#### 3.5.2、向 class 组件中添加局部的 state
+
+我们通过以下三步骤 `date` 从 props 移动到 state 中 ：
+
+1. 把 `render()` 方法中的 `this.props.date` 替换成 `this.state.date`;
+2. 添加一个 class构造函数，然后在函数中初始化 `this.state` 值;将 `props` 传递到父类的构造器中;
+3. 移除 `<Clock />` 元素中的 `date` 属性；
+
+代码如下：
+
+``` jsx
+class Clock extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {date: new Date()};
+  }
+  render(){
+    return (
+      <div>
+        <h1>Hello, World!</h1>
+        <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+      </div>
+    )
+  }
+}
+
+ReactDOM.render(<Clock />,document.getElementById('root'));
+```
+
+#### 3.5.3、将生命周期方法添加到 Class 中
+
+接下来，我们会设置 Clock 的计时器并每秒更新它。
+
+在具有许多组件的应用程序中，当组件被销毁时释放所占用的资源是非常重要的。
+
+当 `Clock` 组件第一次被渲染到 DOM 中的时候，就为其设置一个计时器。这在 React 中被称为“挂载（mount）”。
+
+同时，当 DOM 中 `Clock` 组件被删除的时候，应该清除计时器。这在React中被称为“卸载（unmount）”.
+
+我们可以为 class 组件声明一些特殊的方法，当组件挂载或卸载时就会去执行这些方法，这些方法叫做 “生命周期方法”。
+
+`componentDidMount()` 方法会在组件已经被渲染到 DOM 中后运行，所以，最好在这里设置计时器。
+
+我们会在 `componentWillUnmount()` 生命周期方法中清除计时器.
+
+最后，我们会实现一个叫 `tick()` 的方法， `Clock` 组件每秒都会调用它。
+
+使用 `this.setState()` 来时刻更新组件 state .
+
+``` jsx
+class Clock extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {date: new Date()};
+  }
+  componentDidMount(){
+    this.timerID = setInterval(()=> this.tick(), 1000);
+  }
+  componentWillUnmount(){
+    clearInterval(this.timerID);
+  }
+  tick(){
+    this.setState({
+      date: new Date()
+    })
+  }
+  render(){
+    return (
+      <div>
+        <h1>Hello, World!</h1>
+        <h2>It is {this.state.date.toLocaleTimeString()}</h2>
+      </div>
+    )
+  }
+}
+
+ReactDOM.render(<Clock />,document.getElementById('root'));
+```
+
+#### 3.5.4、正确地使用 State
+
+关于`setState()`应该了解三件事：
+
+##### 3.5.4.1、 不要直接修改 State
+
+例如：下面的代码不好重新渲染组件：
+
+``` jsx
+// Wrong
+this.state.comment = 'Hello';
+```
+
+而是应该使用 `setState()`：
+
+``` jsx
+// Correct
+this.setState({comment: 'Hello'});
+```
+
+构造函数是唯一可以给 `this.state` 赋值的地方。
+
+##### 3.5.4.2、 State 的更新可能是异步的
+
+出于性能考虑，React 可能会把多个 `setState()` 调用合并成一个调用。
+
+因为 `this.props` 和 `this.state` 可能会异步更新，所以不要依赖他们的值来更新下一个状态。
+
+例如，此代码可能会无法更新计数器：
+
+``` jsx
+// Wrong
+this.setState({
+  counter: this.state.counter + this.props.increment,
+});
+```
+
+要解决这个问题，可以让 `setState()` 接收一个函数而不是一个对象。这个函数用上一个 state 作为第一个参数，将此次更新被应用时的 props 做为第二个参数：
+
+``` jsx
+// Correct
+this.setState((state, props) => ({
+  counter: state.counter + props.increment
+}));
+```
+
+##### 3.5.4.3、State 的更新会被合并
+
+当你调用 `setState()` 的时候，React 会把你提供的对象合并到当前的 state。
+
+例如，你的 state 包含几个独立的变量，然后可以分别调用 `setState()` 来单独地更新他们：
+
+``` jsx
+// state 包含几个独立的变量
+constructor(props) {
+    super(props);
+    this.state = {
+      posts: [],
+      comments: []
+    };
+  }
+// 分别调用 `setState()` 来单独地更新他们
+componentDidMount() {
+    fetchPosts().then(response => {
+      this.setState({
+        posts: response.posts
+      });
+    });
+
+    fetchComments().then(response => {
+      this.setState({
+        comments: response.comments
+      });
+    });
+  }
+```
+
+这里的合并是浅合并，所以 `this.setState({comments})` 完整保留了 `this.state.posts`，但是完全替换了 `this.state.comments` 。
+
+#### 3.5.5、数据是向下流动的
+
+不管是父组件或是子组件都无法知道某个组件是有状态的还是无状态的，并且它们也并不关心它是函数组件还是 class 组件。
+
+这就是为什么称 state 为局部的或是封装的的原因。**除了拥有并设置了它的组件，其他组件都无法访问**。
+
+这通常会被叫做“自上而下”或是“单向”的数据流。任何的 state 总是所属于特定的组件，而且从该 state 派生的任何数据或 UI 只能影响树中“低于”它们的组件。
+
+### 3.6、事件处理
+
+React 元素的事件处理和 DOM 元素的很相似，但是有一点语法上的不同：
+
+- React 事件的命名采用小驼峰式 （camelCase），而不是纯小写。
+- 使用 JSX 语法时你需要传入一个函数做为事件处理函数，而不是一个字符串。
+
+例如，传统的HTML：
+
+``` html
+<button onclick="activateLasers()">Activate Lasers</button>
+```
+
+在 React 中略微不同：
+
+``` JSX
+<button onClick={activateLasers}>Activate Lasers</button>
+```
+
+在 React 中另一个不同点式你不能通过返回 `false` 的方式阻止默认行为。你必须显示的使用 `preventDefault` 。 例如，传统的 HTML 中阻止表单的末日提交行为，你可以这样写：
+
+``` html
+<form onsubmit="console.log('You clicked sumbit.'); return false">
+  <button type="submit">Submit</button>
+</form>
+```
+
+在 React 中，可能是这样的：
+
+``` jsx
+function Form(){
+  function handleSubmit(e){
+    e.preventDefault();
+    console.log('You clicked submit.')
+  }
+
+  return (
+    <form onSubmit={handleSumbit}>
+      <button type="submit">Submit</button>
+    </form>
+  )
+}
+```
+
+在这里，`e` 是一个合成事件。React 根据 [W3C 规范](https://www.w3.org/TR/DOM-Level-3-Events/)来定义这些合成事件，所以你不需要担心跨浏览器的兼容性问题。React 事件与原生事件不完全相同。如果想了解更多，请查看 [SyntheticEvent](https://zh-hans.reactjs.org/docs/events.html) 参考指南。
+
+使用 React 时，你一般不需要使用 `addEventListener` 为已创建的 DOM 元素添加监听器。事实上，你只需要在该元素初始渲染的时候添加监听器即可。
+
+当你使用 ES6 class 语法定义一个组件的时候，通常的做法是将事件处理函数声明为 class 中的方法。例如，下面的 `Toggle` 组件会渲染一个让用户切换开关状态的按钮：

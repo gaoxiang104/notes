@@ -1,0 +1,12 @@
+.layout-body {
+    display: flex;
+    padding: 15px;
+}
+
+.layout-nav {
+    width: 250px;
+    height: 100vh;
+    border: 1px solid black;
+    margin-right: 15px;
+    overflow-y: auto;
+}
