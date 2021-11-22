@@ -12,6 +12,9 @@ export default function Layout() {
                 <li>
                     <Link to="/state/clock">/state/clock</Link>
                 </li>
+                <li>
+                    <Link to="/handling-event/toggle">/handling-event/toggle</Link>
+                </li>
             </nav>
             <Outlet />
         </div>
