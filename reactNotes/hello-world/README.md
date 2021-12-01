@@ -41,6 +41,18 @@
       - [3.5.5、数据是向下流动的](#355数据是向下流动的)
     - [3.6、事件处理](#36事件处理)
       - [3.6.1、向事件处理程序传递参数](#361向事件处理程序传递参数)
+    - [3.7、条件渲染](#37条件渲染)
+      - [3.7.1、元素变量](#371元素变量)
+      - [3.7.2、与运算符 &&](#372与运算符-)
+      - [3.7.2、三目运算符](#372三目运算符)
+      - [3.7.3、阻止组件渲染](#373阻止组件渲染)
+    - [3.8、列表 & Key](#38列表--key)
+      - [3.8.1、渲染多个组件](#381渲染多个组件)
+      - [3.8.2、基础列表组件](#382基础列表组件)
+      - [3.8.3、key](#383key)
+      - [3.8.4、用 key 提取组件](#384用-key-提取组件)
+      - [3.8.5、key 值在兄弟节点之间必须唯一](#385key-值在兄弟节点之间必须唯一)
+      - [3.8.6、在 JSX 中嵌入 map()](#386在-jsx-中嵌入-map)
 
 ## 1、React 是什么？
 
@@ -934,3 +946,250 @@ class LoggingButton extends React.Component {
 
 在这两种情况下，React的事件对象 `e` 会被做为第二个参数传递。如果通过箭头函数的方式，事件对象必须显示的进行传递，而通过 `bind` 的方式，事件对象以及更多的参数将会被隐式的进行传递。
 
+### 3.7、条件渲染
+
+在 React 中，你可以创建不同的组件来封装各种你需要的行为。然后，依据应用的不同状态，你可以只渲染对应状态下的部分内容。
+
+React 中的条件渲染和 JavaScript 中的一样，使用 JavaScript 运算符 if 或者条件运算符去创建元素来表现当前的状态，然后让 React 根据她们来更新UI。
+
+例如：根据登录状态来决定显示哪个组件
+
+``` jsx
+function UserGreeting(props) { return <h1>Welcome back!</h1>; }
+function GuestGreeting(props) { return <h1>Please sign up.</h1>; }
+function Greeting(props) {
+  const isLoggedIn = props.isLoggedIn;
+  if (isLoggedIn) {
+    return <UserGreeting />
+  }
+    return <GuestGreeting />
+}
+```
+
+#### 3.7.1、元素变量
+
+可以使用变量存储元素。它可以帮助你有条件地渲染组件的一部分，而其他的渲染部分并不会因此而改变。
+
+例如：
+
+``` jsx
+class Greeting extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    let greeting ;
+    const isLoggedIn = props.isLoggedIn;
+    if (isLoggedIn) {
+      greeting = <UserGreeting />
+    }else{
+      greeting = <GuestGreeting />
+    }
+    return (
+      <div>
+        {greeting}
+      </div>
+    )
+  }
+}
+```
+
+#### 3.7.2、与运算符 &&
+
+通过花括号包裹代码，你可以在 JSX 中嵌入表达式。这也包括 JavaScript 中的逻辑与（&&）运算符。它可以很方便地进行元素的条件渲染：
+
+``` jsx
+const messages = ['React','Re: React','Re:Re: React'];
+function Mailbox(props){
+  const unreadMessages = props.unreadMessages;
+  return (
+    <div>
+      <h1>Hello!</h1>
+      {unreadMessages.length > 0 && 
+        <h2>
+          You have {unreadMessages.length} unread messages.
+        </h2>
+      }
+    </div>
+  )
+}
+ReactDOM.render(
+  <Mailbox unreadMessages={messages} />,
+  document.getElementById('root')
+);
+```
+
+之所以能这样做，是因为在 JavaScript 中， `true && expression` 总是会返回 `experssion` ，而 `false && expression` 总是返回 `false`。
+
+因此，如果条件是 `true` , `&&` 右侧的元素就会被渲染，如果是 `false` , React 会忽略并跳过它。
+
+请注意，返回 `false` 的表达式会使 `&&` 后面的元素被跳过，但会返回 `false` 表达式。在下面示例中，render 方法的返回值是 `<div>0</div>` 。
+
+``` jsx
+render() {
+  const count = 0 ;
+  return (
+    <div>
+      {count && <h1>Messages: {count}</h1>}
+    </div>
+  )
+}
+```
+
+#### 3.7.2、三目运算符
+
+另一种内联条件渲染的方法是使用 JavaScript 中的三目运算符 `condition ? true : false` 。
+
+``` jsx
+render() {
+  const isLoggedIn = this.state.isLoggedIn;
+  return (
+    <div>
+      {isLoggedIn
+        ? <LogoutButton onClick={this.handleLogoutClick} />
+        : <LoginButton onClick={this.handleLoginClick} />
+      }
+    </div>
+  );
+}
+```
+
+#### 3.7.3、阻止组件渲染
+
+在极少数情况下，你可能希望隐藏组件，即使它已经被其他组件渲染。若要完成此操作，你可以让 `render` 方法直接返回 `null` ，而不进行任何渲染。
+
+下面的实例中， `<WarningBanner />` 会根据 prop 中 `warn` 的值来进行条件渲染。 如果 `warn` 的值是 `false` , 那么组件则不会渲染：
+
+``` jsx
+
+function WarningBanner(props){
+  if(!props.warn){
+    return null;
+  }
+
+  return (
+    <div className="warning">
+      Warning!
+    </div>
+  )
+}
+
+```
+
+在组件的 `render` 方法中返回 `null` 并不会影响组件的生命周期。例如，上面这个示例中， `componentDidUpdate` 依然会被调用。
+
+### 3.8、列表 & Key
+
+#### 3.8.1、渲染多个组件
+
+你可以通过使用 `{}` 在 JSX 内构建一个元素集合。我们使用 JavaScript 中的 `map()` 方法来遍历 `numbers` 数组。将数组中的美国元素变成 `<li>` 标签，最后我们将得到的数据赋值给 `listItems` ：
+
+``` jsx
+const numbers = [1,2,3,4,5];
+const listItems = numbers.map((number)=>
+  <li>{number}</li>
+);
+ReactDOM.render(
+  <ul>{listItems}</ul>,
+  document.getElementById('root')
+);
+```
+
+#### 3.8.2、基础列表组件
+
+通常你需要在一个组件中渲染。我们可以把前面的例子重构成一个组件，这个组件接收 `numbers` 数组作为参数并输出一个元素列表。
+
+``` jsx
+function NumberList(props){
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) => 
+    <li>{number}</li>
+  );
+  return (
+    <ul>{listItems}</ul>
+  );
+}
+```
+
+当我们运行这段代码，将会看到一个警告 `a key should be provided for list items`，意思是当你创建一个元素时，必须包括一个特殊的 key 属性。
+
+#### 3.8.3、key
+
+key 帮助 React 识别哪些元素改变了，比如被添加或删除。因此你应该给数组中的美国元素赋予一个确定的标识。
+
+``` jsx
+const numbers = [1, 2, 3, 4, 5];
+const listItems = numbers.map((number) =>
+  <li key={number.toString()}>
+    {number}
+  </li>
+);
+```
+
+一个元素的 key 最好是这个元素在列表中拥有的一个独一无二的字符串。通常，我们使用数据中的 id 来作为元素的 key：
+
+``` jsx
+const todoItems = todos.map((todo) =>
+  <li key={todo.id}>
+    {todo.text}
+  </li>
+);
+```
+
+当元素没有确定 id 的时候，万不得已你可以使用元素索引 index 作为 key：
+
+``` jsx
+const todoItems = todos.map((todo, index) =>
+  // Only do this if items have no stable IDs
+  <li key={index}>
+    {todo.text}
+  </li>
+);
+```
+
+如果列表项目的顺序可能会变化，我们不建议使用索引作为 key 值，因为这样做会导致性能变差，还可以引起组件状态的问题。可以看看 Robin Pokorny 的[深度解析使用索引作为 key 的负面影响](https://medium.com/@robinpokorny/index-as-a-key-is-an-anti-pattern-e0349aece318)这一篇文章。如果你选择不指定显式的 key 值，那么 React 将默认使用索引用作为列表项目的 key 值。
+
+要是你有兴趣了解更多的话，这里有一篇文章[深入解析为什么 key 是必须的](https://zh-hans.reactjs.org/docs/reconciliation.html#recursing-on-children)可以参考。
+
+#### 3.8.4、用 key 提取组件
+
+*元素的 key 只有放在就近的数组上下文中才有意义。*
+
+比方说，如果你提取出一个 `ListItem` 组件，你应该把 key 保留在数组中的这个 `<ListItem />` 元素上，而不是放在 `ListItem` 组件中的 `<li>` 元素上。
+
+#### 3.8.5、key 值在兄弟节点之间必须唯一
+
+数组元素中使用的 key 在其兄弟节点之间应该是独一无二的。然而，它们不需要是全局唯一的。当我们生成两个不同的数组时，我们可以使用相同的 key 值。
+
+key 会传递信息给 React ，但不会传递给你的组件。如果你的组件中需要使用 key 属性的值，请用其他属性名显式传递这个值：
+
+``` jsx
+const content = posts.map((post) =>
+  <Post
+    key={post.id}
+    id={post.id}
+    title={post.title} />
+);
+```
+
+> 注意：上面例子中，Post 组件可以读出 props.id，但是不能读出 props.key。
+
+#### 3.8.6、在 JSX 中嵌入 map()
+
+JSX 允许在大括号中嵌入任何表达式，所以我们可以内联 map() 返回的结果：
+
+``` jsx
+function NumberList(props) {
+  const numbers = props.numbers;
+  return (
+    <ul>
+      {numbers.map((number) =>
+        <ListItem key={number.toString()}
+                  value={number} />
+      )}
+    </ul>
+  );
+}
+```
+
+这么做有时可以使你的代码更清晰，但有时这种风格也会被滥用。就像在 JavaScript 中一样，何时需要为了可读性提取出一个变量，这完全取决于你。但请记住，如果一个 map() 嵌套了太多层级，那可能就是你提取组件的一个好时机。
