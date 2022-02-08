@@ -15,6 +15,9 @@ export default function Layout() {
                 <li>
                     <Link to="/handling-event/toggle">/handling-event/toggle</Link>
                 </li>
+                <li>
+                    <Link to="/name-form-fun/NameFormFun">/name-form-fun/NameFormFun</Link>
+                </li>
             </nav>
             <Outlet />
         </div>
