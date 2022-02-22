@@ -194,10 +194,10 @@ module.exports = function override(config, env) {
 }
 ```
 
-- step4：使用`customize-cra`，添加`img-loader`插件，修改`config-overrides.js`
+- step4：使用`customize-cra`，添加`img-loader`、`sass-loader`插件，设置`path`路径别名，修改`config-overrides.js`
 
 ```shell
-npm install img-loader --save-dev
+npm install img-loader url-loader sass-loader sass --save-dev
 ```
 
 ``` javascript
@@ -207,30 +207,74 @@ const {
     disableEsLint,
     addWebpackModuleRule,
     overrideDevServer,
+    addWebpackAlias,
     watchAll
-} = require("customize-cra");
-
-module.exports = {
+  } = require("customize-cra");
+  
+  const path = require("path");
+  
+  module.exports = {
     webpack: override(
-        // usual webpack plugin
-        disableEsLint(),
-        // Adds the provided rule to the webpack config's module.rules array.
-        addWebpackModuleRule(
-            { // img-loader
-                test: /\.(jpe?g|png|gif|svg)$/i,
-                use: [
-                    'url-loader?limit=10000',
-                    'img-loader'
-                ]
-            }
-        ),
+      // usual webpack plugin
+      disableEsLint(),
+      // Adds the provided rule to the webpack config's module.rules array.
+      addWebpackModuleRule(
+        { // img-loader
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          use: [
+            'url-loader?limit=10000',
+            'img-loader'
+          ]
+        }
+      ),
+      addWebpackModuleRule(
+        { // sass-loader
+          test: /\.s[ac]ss$/i,
+          use: [
+            // Creates `style` nodes from JS strings
+            "style-loader",
+            // Translates CSS into CommonJS
+            "css-loader",
+            // Compiles Sass to CSS
+            "sass-loader",
+          ],
+        }
+      ),
+      // path alias
+      addWebpackAlias({
+        '～': path.resolve(__dirname, './src')
+      })
     ),
     devServer: overrideDevServer(
-        // dev server plugin
-        watchAll()
+      // dev server plugin
+      watchAll()
     )
-};
+  };
 
+```
+
+配置`jsconfig.json`，使得vscode有智能提示：
+
+``` json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "jsx": "preserve",
+    "baseUrl": "./",
+    "paths": {
+      "~/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist"
+  ]
+}
 ```
 
 更多的`customize-cra`的方法可以查阅[官方API](https://github.com/arackaf/customize-cra/blob/master/api.md)。
