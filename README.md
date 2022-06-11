@@ -10,4 +10,5 @@
 ## 3. 学习笔记
 
 * [React学习](./reactNotes/README.md)
+* [MySQL学习](./mysqlNotes/README.md)
 * [V2R@y配置](./v2r@y/README.md)
