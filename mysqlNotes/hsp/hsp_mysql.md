@@ -14,6 +14,7 @@
     - [1.3.1. 创建表](#131-创建表)
     - [1.3.2. 删除表](#132-删除表)
     - [1.3.3. 修改表](#133-修改表)
+    - [1.3.4. 查看表](#134-查看表)
   - [1.4. MySQL数据类型](#14-mysql数据类型)
     - [1.4.1. 整数类型](#141-整数类型)
     - [1.4.2. 浮点类型](#142-浮点类型)
@@ -252,6 +253,8 @@ CREATE TABLE `user`
 | salary     | 小数型 | 薪资     |
 | resume     | 文本   | 简历     |
 
+> *练习2 - 解答：*
+
 ``` sql
 CREATE TABLE emp (
   id INT,
@@ -270,6 +273,92 @@ INSERT INTO `emp` VALUES (1,'小妖怪','男','2000-11-11','2010-11-10 11:11:11'
 ### 1.3.2. 删除表
 
 ### 1.3.3. 修改表
+
+使用`ALTER TABLE`语句追加，修改，或删除列的语法。
+
+- 添加列
+  
+  ``` sql
+  ALTER TABLE table_name
+  ADD (column datatype [DEFAULT expr]
+    [,column datatype] ... );
+  ```
+
+- 修改列
+
+  ``` sql
+  ALTER TABLE table_name
+  MODIFY (column datatype [DEFAULT expr]
+    [,column datatype] ... );
+  ```
+
+- 删除列
+
+  ``` sql
+  ALTER TABLE table_name
+  DROP (column);
+  ```
+
+- 修改表名
+
+  ``` sql
+  RENAME TABLE old_table_name TO new_table_name;
+  ```
+
+- 修改列名
+
+  ``` sql
+  ALTER TABLE table_name CHANGE old_column_name new_column_name datatype;
+  ```
+
+- 修改表字符集
+
+  ``` sql
+  ALTER TABLE table_name CHARACTER SET 字符集;
+  --
+  -- 注意，修改字符集后，新增的column使用新字符集；但是，原本column的字符集不会改变；
+  ```
+
+> *练习：*
+>
+> - 员工表`emp`中新增一个image列，varchar类型（在resume后面）；
+> - 修改job列，使其长度为60；
+> - 删除sex列；
+> - 表名改为employee;
+> - 修改表的字符集为utf8;
+> - 列明name修改为user_name;
+> 
+> *练习 - 解答：*
+
+``` sql
+
+ALTER TABLE `emp` ADD `image` VARCHAR(255) AFTER `resume`;
+ALTER TABLE `emp` MODIFY `job` VARCHAR(60);
+ALTER TABLE `emp` DROP `sex`;
+RENAME TABLE `emp` TO `employee`;
+ALTER TABLE `employee` CHARACTER SET utf8 COLLATE utf8_bin;
+ALTER TABLE `employee` CHANGE `name` `user_name` VARCHAR(50);
+```
+
+### 1.3.4. 查看表
+
+- 查看表结构
+
+  ``` sql
+  DESC table_name;
+  ```
+
+- 查看表结构，包含comment
+
+  ``` sql
+  SHOW FULL COLUMNS FROM 表名;
+  ```
+
+- 查看完整信息
+  
+  ``` sql
+  select * from information_schema.COLUMNS where table_name = '表名' and table_schema = '数据库名称';
+  ```
 
 ## 1.4. MySQL数据类型
 
@@ -344,8 +433,6 @@ INSERT INTO `emp` VALUES (1,'小妖怪','男','2000-11-11','2010-11-10 11:11:11'
 > 4.DATETIME的默认值为null；TIMESTAMP的字段默认不为空（not null）,默认值为当前时间（CURRENT_TIMESTAMP），
 >
 > 如果不做特殊处理，并且update语句中没有指定该列的更新值，则默认更新为当前时间。
-
-
 
 ## 1.5. CRUD
 
