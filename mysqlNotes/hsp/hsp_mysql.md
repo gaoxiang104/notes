@@ -26,9 +26,16 @@
     - [1.5.3. Delete](#153-delete)
     - [1.5.4. Select](#154-select)
       - [1.5.4.1. 单表](#1541-单表)
-      - [1.5.4.2. 多表](#1542-多表)
+      - [1.5.4.2. WHERE 子句](#1542-where-子句)
+      - [1.5.4.3. order by 子句](#1543-order-by-子句)
+      - [1.5.4.4. 多表](#1544-多表)
   - [1.6. 函数](#16-函数)
-    - [1.6.1. 统计函数](#161-统计函数)
+    - [1.6.1. 统计/合计函数](#161-统计合计函数)
+      - [1.6.1.1. 统计函数 - COUNT](#1611-统计函数---count)
+        - [1.6.1.1.1. COUNT(*) 和 COUNT(列) 的区别](#16111-count-和-count列-的区别)
+      - [1.6.1.2. 合计函数 - SUM](#1612-合计函数---sum)
+      - [1.6.1.3. 合计函数 - AVG](#1613-合计函数---avg)
+      - [1.6.1.4. 合计函数 - MAX / MIN](#1614-合计函数---max--min)
     - [1.6.2. 时间日期](#162-时间日期)
     - [1.6.3. 字符串函数](#163-字符串函数)
     - [1.6.4. 数学函数](#164-数学函数)
@@ -271,6 +278,10 @@ INSERT INTO `emp` VALUES (1,'小妖怪','男','2000-11-11','2010-11-10 11:11:11'
 ```
 
 ### 1.3.2. 删除表
+
+``` sql
+DROP table_name;
+```
 
 ### 1.3.3. 修改表
 
@@ -527,11 +538,248 @@ DELETE FROM `employee`;
 
 #### 1.5.4.1. 单表
 
-#### 1.5.4.2. 多表
+``` sql
+-- 基本使用
+SELECT [DISTINCT] *|{column_1,column_2 ...} FROM table_name;
+```
+
+``` sql
+-- 使用表达式对查询的列进行运输
+SELECT [DISTINCT] *|{column_1 | expression,column_2 | expression ...} FROM table_name;
+```
+
+``` sql
+-- 在SELECT语句中可以使用as语句
+SELECT column_name AS 别名 FROM table_name;
+```
+
+- 注意事项：
+
+  - SELECT 指定查询哪些列的数据。
+  - column 指定列名。
+  - `*` 代表查询所有列。
+  - FROM 指定查询哪张表。
+  - DISTINCT 可选，指显示结果时，是否去掉重复数据。
+
+> *新建数据，用于查询：*
+
+``` sql
+-- 创建新的表 student 
+CREATE TABLE student (
+  id INT(11) NOT NULL ,
+  `name` VARCHAR(64) NOT NULL ,
+  `chinese` DECIMAL(5,2),
+  `english` DECIMAL(5,2),
+  `math` DECIMAL(5,2)
+);
+
+INSERT INTO student VALUES (1,'韩顺平',89,78,90);
+INSERT INTO student VALUES (2,'张飞',67,98,56);
+INSERT INTO student VALUES (3,'宋江',87,78,77);
+INSERT INTO student VALUES (4,'关羽',88,98,90);
+INSERT INTO student VALUES (5,'赵云',82,84,67);
+INSERT INTO student VALUES (6,'欧阳锋',55,85,45);
+INSERT INTO student VALUES (7,'黄蓉',75,65,30);
+```
+
+> *练习：*
+
+``` SQL
+-- 查询表中所有学生的信息。
+SELECT * FROM student;
+-- 查询表中所有学生的姓名和对应的英语成绩。
+SELECT `name`, `english` FROM student;
+-- 过滤表中重复数据 distinct
+SELECT DISTINCT * FROM student;
+-- 要查询的记录，没过字段都相同，才会去重
+SELECT DISTINCT `english` FROM student;
+-- 
+-- 统计每个学生的总分
+SELECT  `name`, (`chinese` + `english` + `math` ) FROM student;
+-- 在所有学生总分加10分的情况
+SELECT  `name`, (`chinese` + `english` + `math` ) + 10 FROM student;
+-- 使用别名表示学生分数
+SELECT  `name`, (`chinese` + `english` + `math` ) AS 'total_score' FROM student;
+```
+
+#### 1.5.4.2. WHERE 子句
+
+- 在where子句中经常使用的运算符
+
+<table>
+    <tr>
+        <th>类型</th><th>符号</th><th>说明</th>
+    </tr>
+    <tr>
+        <td rowspan="5">比较运算符</td><td> >，>=，<，<=，<>，!= </td><td>大于，大于等于，小于，小于等于，不等于</td>
+    </tr>
+    <tr>
+        <td>BETWEEN ... AND ...</td><td>显示在某一个区间的值</td>
+    </tr>
+    <tr>
+        <td>IN(set)</td><td>显示在in列表中的值，例：IN(1,2)</td>
+    </tr>
+    <tr>
+        <td>LIKE 'abc' ; NOT LIKE 'abc'</td><td>模糊查询</td>
+    </tr>
+    <tr>
+        <td>IS NULL ; IS NOT NULL</td><td>判断是否为空/非空</td>
+    </tr>
+    <tr>
+        <td rowspan="3">逻辑运输符</td><td>AND</td><td>多个条件同时成立</td>
+    </tr>
+    <tr>
+        <td>OR</td><td>多个条件任一成立</td>
+    </tr>
+    <tr>
+        <td>NOT</td><td>不成立，例: WHERE NOT(salary > 100)</td>
+    </tr>
+</table>
+
+> *练习：*
+
+``` SQL
+-- 查询姓名为赵云的学生成绩。
+SELECT * FROM student WHERE `name`='赵云';
+-- 查询英语成绩大于90分的同学。
+SELECT * FROM student WHERE `english` > 90;
+-- 查询总分大于200分的所有同学
+SELECT *, (`chinese` + `english` + `math`) AS 'total_score' FROM student WHERE  (`chinese` + `english` + `math`) > 200;
+-- 
+-- 查询math大于60，并且 id大于4的学生成绩
+SELECT * FROM student WHERE `math` > 60 AND `id`>4;
+-- 查询英语成绩大于语文成绩的同学
+SELECT * FROM student WHERE `english` > `chinese` ;
+-- 查询总分大于200分，并且 数学成绩小于语文成绩的，姓韩的学生
+SELECT * FROM student WHERE (`chinese` + `english` + `math`) > 200 AND `math` < `chinese` AND `name` LIKE '韩%';
+-- 查询英语分数在 80-90 之间的同学。
+SELECT * FROM student WHERE `english` BETWEEN 80 AND 90 ;  -- BETWEEN ... AND ... 是闭区间，包含两头 。
+-- 查询数学分为89,90,91的同学。
+SELECT * FROM student WHERE `math` IN (89,90,91) ;
+-- 查询数学分>80，语文分>80的同学
+SELECT * FROM student WHERE `math` > 80  AND `chinese` > 80 ;
+
+```
+
+#### 1.5.4.3. order by 子句
+
+``` sql
+-- 使用 order by 子句排序查询结果
+SELECT column_1, column_2 .. FROM table_name ORDER BY column ASC|DESC;
+```
+
+- 说明
+
+  - ORDER BY 指定排序的列，排序的列即可以时表中的列名，也可以是`别名`
+  - ASC 升序【默认】，DESC 降序
+  - ORDER BY 子句应位于SELECT 语句的结尾。
+
+> *练习：*
+
+``` SQL
+-- 对数学成绩排序后输出【升序】
+SELECT * FROM student ORDER BY `math`;
+-- 对总分按从高到低的顺序输出
+SELECT *,(`chinese` + `english` + `math`) AS 'total_score'FROM student ORDER BY `total_score` DESC;
+-- 对姓李的学生成绩排序输出【升序】
+SELECT *,(`chinese` + `english` + `math`) AS 'total_score'FROM student WHERE `name` LIKE '李%' ORDER BY `total_score`;
+
+```
+
+#### 1.5.4.4. 多表
 
 ## 1.6. 函数
 
-### 1.6.1. 统计函数
+### 1.6.1. 统计/合计函数
+
+#### 1.6.1.1. 统计函数 - COUNT
+
+``` sql
+-- COUNT 返回行的总数
+SELECT COUNT(*) | COUNT(列名) FROM table_name [WHERE where_definition] 
+```
+
+> *练习：*
+
+``` SQL
+-- 统计一个班级共有多少学生？
+SELECT COUNT(*) FROM student;
+-- 统计数学成绩大于90的学生有多少个？
+SELECT COUNT(*) FROM student WHERE `math`>90;
+-- 统计总分大于250的人数
+SELECT COUNT(*) FROM student WHERE (`chinese`+`english`+`math`)>250;
+```
+
+##### 1.6.1.1.1. COUNT(*) 和 COUNT(列) 的区别
+
+- 解释
+  - COUNT(*)：返回满足条件的记录的行数
+  - COUNT(列)：统计满足条件的某列有多少个，但是会排除为null
+
+> *演示：*
+
+``` SQL
+CREATE TABLE t17 (
+  `name` VARCHAR(64)
+);
+
+INSERT INTO t17 VALUES ('tom'),('jack'),('mary'),(NULL);
+
+SELECT COUNT(*) FROM t17; -- 返回：4
+SELECT COUNT(`name`) FROM t17; -- 返回：3
+```
+
+#### 1.6.1.2. 合计函数 - SUM
+
+``` sql
+-- SUM 函数返回满足 wh#re 条件的行的和；一般使用在数值列
+SELECT SUM(列名) [,SUM(列名) ...] FROM table_name [WHERE where_definition] 
+```
+
+> *练习：*
+
+``` SQL
+-- 统计一个班级数学总成绩
+SELECT SUM(`math`) FROM student;
+-- 统计一个班级语文、英语、数学各科的总成绩
+SELECT SUM(`chinese`),SUM(`english`),SUM(`math`) FROM student;
+-- 统计一个班级语文、英语、数学的成绩总和
+SELECT SUM(`chinese` + `english` + `math`) FROM student;
+-- 统计一个班级语文成绩的平均分
+SELECT SUM(`chinese`) / COUNT(*) FROM student;
+```
+
+#### 1.6.1.3. 合计函数 - AVG
+
+``` sql
+-- AVG 函数返回满足 where 条件的一列的平均值
+SELECT AVG(列名) [,AVG(列名) ...] FROM table_name [WHERE where_definition] 
+```
+
+> *练习：*
+
+``` SQL
+-- 求一个班级数学平均分
+SELECT AVG(`math`) FROM student;
+-- 求一个班总分平均分
+SELECT AVG(`chinese` + `english` + `math`) FROM student;
+```
+
+#### 1.6.1.4. 合计函数 - MAX / MIN
+
+``` sql
+-- max / min 函数返回满足where条件的一列的最大/最小值
+SELECT MAX/MIN(列名) [,MAX/MIN(列名) ...] FROM table_name [WHERE where_definition] 
+```
+
+> *练习：*
+
+``` SQL
+-- 求班级最高分和最低分（数值范围在统计中特别有用）
+SELECT MAX(`chinese` + `english` + `math`) AS 'max_total_score',
+       MIN(`chinese` + `english` + `math`) AS 'min_total_score'
+       FROM student;
+```
 
 ### 1.6.2. 时间日期
 
