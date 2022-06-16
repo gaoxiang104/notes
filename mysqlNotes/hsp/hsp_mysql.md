@@ -438,9 +438,90 @@ ALTER TABLE `employee` CHANGE `name` `user_name` VARCHAR(50);
 
 ### 1.5.1. Insert
 
+``` sql
+INSERT INTO table_name [(column [, column ... ])]
+VALUES (value [, value ... ]);
+```
+
+- 细节说明：
+
+  - 插入的数据应与字段的数据类型相同；
+  - 数据的长度应在列的规定范围内；
+  - 在`values`中列出的数据位置必须与被加入的列的排列位置相对于；
+  - 列可以插入空值【前提是该字段允许为空】;
+  - `INSERT INTO table_name (column...) VALUES (),(),()...` 形式添加多条记录；
+  - 如果是给表中的所有字段添加数据，可以不写前面的字段名称；
+  - 默认值的使用，当不给某个字段值时，如果有默认值就会添加，否则报错。
+
+> *练习：*
+>
+> - 创建一张商品表(id int , goods_name varchar(64), price decimal) ;
+> - 添加2条记录
+>
+> *练习 - 解答：*
+
+``` sql
+CREATE TABLE `goods` (
+  `id` INT(11),
+  `goods_name` VARCHAR(64),
+  `price` DECIMAL(8,2)
+);
+
+INSERT INTO `goods` (`id`, `goods_name`, `price`)
+VALUES 
+  (1, '华为手机', 5999.99),
+  (2, '苹果手机', 9999.99);
+```
+
 ### 1.5.2. Update
 
+``` sql
+UPDATE table_name 
+  SET column_name_1 = expr_1 [, column_name_2 = expr_2 ... ] 
+  [ WHERE where_definition ] ;
+```
+
+- 细节说明：
+
+  - UPDATE 语法可以用新值更新原有表行中的各列;
+  - SET 子句指要修改哪些列和要给予哪些值;
+  - WHERE 子句指定应更新哪些行。如没有 WHERE 子句，则更新所有的行（记录），因此要小心；
+  - 如果需要修改多个字段，可以通过 SET 字段1=值1,字段2=值2 ...
+
+> *练习：*
+
+``` SQL
+-- 在创建的employee表中进行记录修改
+-- 1，将所有员工薪水修改为5000元。【如果没带where 条件，会修改所有的记录，因此要小心】
+UPDATE `employee` SET `salary` = 5000;
+-- 2，将姓名为 小妖怪 的员工薪水修改为 3000元；
+UPDATE `employee` SET `salary` = 3000 WHERE `user_name`='小妖怪';
+-- 3，将 老妖怪 的薪水在原有基础上增加1000元；
+INSERT INTO `employee` VALUES (2,'老妖怪','1990-01-01','2000-10-10 10:10:10','捶背的',5000,'给大王捶背的',NULL);
+
+UPDATE `employee` SET `salary` = `salary`+1000 WHERE `user_name`='老妖怪';
+
+SELECT * FROM `employee`;
+```
+
 ### 1.5.3. Delete
+
+``` sql
+DELETE FROM table_name [WHERE where_definition];
+```
+
+- 细节说明：
+
+  - 如果不使用where子句，将删除表中所有数据。
+
+> *练习：*
+
+``` SQL
+-- 删除表中名称为'老妖怪'的记录。
+DELETE FROM `employee` WHERE `user_name`='老妖怪';
+-- 删除表中所有记录。
+DELETE FROM `employee`;
+```
 
 ### 1.5.4. Select
 
