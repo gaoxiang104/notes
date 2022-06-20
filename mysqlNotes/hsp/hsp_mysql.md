@@ -25,10 +25,10 @@
     - [1.5.2. Update](#152-update)
     - [1.5.3. Delete](#153-delete)
     - [1.5.4. Select](#154-select)
-      - [1.5.4.1. 单表](#1541-单表)
+      - [1.5.4.1. SELECT 查询](#1541-select-查询)
       - [1.5.4.2. WHERE 子句](#1542-where-子句)
       - [1.5.4.3. order by 子句](#1543-order-by-子句)
-      - [1.5.4.4. 多表](#1544-多表)
+      - [1.5.4.4. GROUP BY 子句](#1544-group-by-子句)
   - [1.6. 函数](#16-函数)
     - [1.6.1. 统计/合计函数](#161-统计合计函数)
       - [1.6.1.1. 统计函数 - COUNT](#1611-统计函数---count)
@@ -36,9 +36,9 @@
       - [1.6.1.2. 合计函数 - SUM](#1612-合计函数---sum)
       - [1.6.1.3. 合计函数 - AVG](#1613-合计函数---avg)
       - [1.6.1.4. 合计函数 - MAX / MIN](#1614-合计函数---max--min)
-    - [1.6.2. 时间日期](#162-时间日期)
-    - [1.6.3. 字符串函数](#163-字符串函数)
-    - [1.6.4. 数学函数](#164-数学函数)
+    - [1.6.2. 字符串函数](#162-字符串函数)
+    - [1.6.3. 数学函数](#163-数学函数)
+    - [1.6.4. 时间日期](#164-时间日期)
     - [1.6.5. 流程控制](#165-流程控制)
   - [1.7. 内连接](#17-内连接)
   - [1.8. 外连接](#18-外连接)
@@ -536,7 +536,7 @@ DELETE FROM `employee`;
 
 ### 1.5.4. Select
 
-#### 1.5.4.1. 单表
+#### 1.5.4.1. SELECT 查询
 
 ``` sql
 -- 基本使用
@@ -686,7 +686,88 @@ SELECT *,(`chinese` + `english` + `math`) AS 'total_score'FROM student WHERE `na
 
 ```
 
-#### 1.5.4.4. 多表
+#### 1.5.4.4. GROUP BY 子句
+
+``` sql
+-- 使用 GROUP BY 子句对列进行分组； 使用 HAVING 子句对分组后的结果进行过滤
+SELECT column_1, column_2 .. FROM table_name GROUP BY column HAVING ...;
+```
+
+- 说明
+
+  - GROUP BY 用于对查询的结果分组统计。
+  - HAVING 子句用于限制分组显示结果。
+
+> *练习：*
+
+``` SQL
+DROP TABLE IF EXISTS `dept` ;
+CREATE TABLE `dept` (
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号',
+  dept_name VARCHAR(64) NOT NULL COMMENT '部门编号',
+  loc VARCHAR(64) NOT NULL COMMENT '位置'
+) COMMENT '部门表';
+
+INSERT INTO `dept` VALUES 
+  (10,'ACCOUNTING','NEW YORK'),
+  (20,'RESEARCH','DALLAS'),
+  (30,'SALES','CHICAGO'),
+  (40,'OPERATIONS','BOSTON');
+
+DROP TABLE IF EXISTS `emp` ;
+CREATE TABLE `emp` (
+  emp_no INT UNSIGNED NOT NULL COMMENT '编号',
+  emp_name VARCHAR(64) NOT NULL COMMENT '名字',
+  job VARCHAR(64) NOT NULL COMMENT '工作',
+  mgr INT UNSIGNED COMMENT '上级编号',
+  hire_date DATE NOT NULL COMMENT '入职时间',
+  sal DECIMAL(7,2) NOT NULL COMMENT '薪水',
+  comm DECIMAL(7,2) COMMENT '红利',
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号'
+) COMMENT '员工表';
+
+INSERT INTO `emp` VALUES 
+  (7369,'SMITH','CLERK',7902,'1990-12-17',800,NULL,20),
+  (7499,'ALLEN','SALESMAN',7698,'1991-2-20',1600,300,30),
+  (7521,'WARD','SALESMAN',7698,'1991-2-22',1250,500,30),
+  (7566,'JONES','MANGER',7839,'1991-4-2',2975,NULL,20),
+  (7654,'MARTIN','SALESMAN',7698,'1991-9-28',1250,1400,30),
+  (7698,'BLAKE','MANAGER',7839,'1991-5-1',2850,NULL,30),
+  (7782,'CLARK','MANAGER',7839,'1991-6-9',2450,NULL,10),
+  (7788,'SCOTT','ANALYST',7566,'1997-4-19',3000,NULL,20),
+  (7839,'KING','PRESIDENT',NULL,'1991-11-17',5000,NULL,16),
+  (7844,'TURNER','SALESMAN',7698,'1991-9-8',1500,NULL,30),
+  (7900,'JAMES','CLERK',7698,'1991-12-3',950,NULL,30),
+  (7902,'FORD','ANALYST',7566,'1991-12-3',3000,NULL,20),
+  (7934,'MILLER','CLERK',7782,'1992-1-23',1300,NULL,10);
+
+DROP TABLE IF EXISTS `sal_grade`;
+CREATE TABLE `sal_grade` (
+  grade INT UNSIGNED NOT NULL COMMENT '级别',
+  low_sal DECIMAL(7,2) NOT NULL COMMENT '最低工资',
+  hight_sal DECIMAL(7,2) NOT NULL COMMENT '最高工资'
+) COMMENT '工资级别表';
+
+INSERT INTO `sal_grade` VALUES 
+  (1,700,1200),
+  (2,1201,1400),
+  (3,1401,2000),
+  (4,2001,3000),
+  (5,3001,9999);
+
+```
+
+> *练习：*
+
+``` SQL
+-- 查询每个部门的平均工资和最高工资
+SELECT dept_no, AVG(sal) AS dept_avg_sal, MAX(sal) AS dept_max_sal FROM `emp` GROUP BY dept_no ;
+-- 查询每个部门的每种岗位的平均工资和最低工资
+SELECT dept_no,job, AVG(sal) AS dept_avg_sal, MIN(sal) AS dept_min_sal FROM `emp` GROUP BY dept_no, job ;
+-- 查询平均工资低于2000的部门编号和它的平均工资
+SELECT dept_no, AVG(sal) AS dept_avg_sal FROM `emp` GROUP BY dept_no HAVING dept_avg_sal < 2000;
+
+```
 
 ## 1.6. 函数
 
@@ -781,11 +862,33 @@ SELECT MAX(`chinese` + `english` + `math`) AS 'max_total_score',
        FROM student;
 ```
 
-### 1.6.2. 时间日期
+### 1.6.2. 字符串函数
 
-### 1.6.3. 字符串函数
+| 函数                                | 说明                                               |
+| ----------------------------------- | -------------------------------------------------- |
+| CHARSET(str)                        | 返回字符串集，返回 utf8 , gbk ...                  |
+| CONCAT(str [,...])                  | 连接字串                                           |
+| INSTR(str,substr)                   | 返回substr在str中出现的位置，没有返回0             |
+| UCASE(str)                          | 转换成大写                                         |
+| LCASE(str)                          | 转换成小写                                         |
+| LEFT(str,length)                    | 从str中的左边起取length个字符                      |
+| RIGHT(str,length)                   | 从str中的右边起取length个字符                      |
+| LENGTH(str)                         | str长度                                            |
+| REPLACE(str,search_str,replace_str) | 在str中用replace_str替换search_str                 |
+| STRCMP(str1,str2)                   | 逐字符比较两个字符串大小                           |
+| SUBSTRING(str,position [, length])  | 从str的position开始【从1开始计算】，取length个字符 |
+| TRIM(str) LTRIM(str) RTRIM(str)     | 去除空格，左端空格，右端空格                       |
 
-### 1.6.4. 数学函数
+> *练习：*
+
+``` SQL
+-- 以首字母小写的方式显示所有员工的emp的姓名
+SELECT CONCAT(LCASE(LEFT(emp_name,1)), SUBSTRING(emp_name,2)) AS new_emp_name FROM emp ;
+```
+
+### 1.6.3. 数学函数
+
+### 1.6.4. 时间日期
 
 ### 1.6.5. 流程控制
 
