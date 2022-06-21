@@ -888,6 +888,52 @@ SELECT CONCAT(LCASE(LEFT(emp_name,1)), SUBSTRING(emp_name,2)) AS new_emp_name FR
 
 ### 1.6.3. 数学函数
 
+| 函数                        | 说明                                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ABS(num)                    | 绝对值                                                                                                                                 |
+| BIN(decimal_num)            | 十进制转二进制                                                                                                                         |
+| CEILING(num)                | 向上取整，得到比num2大的最小整数                                                                                                       |
+| CONV(num,from_base,to_base) | 进制转换                                                                                                                               |
+| FLOOR(num)                  | 向下取整，得到比num小的最大整数                                                                                                        |
+| FORMAT(num,decimal_places)  | 保留小数位                                                                                                                             |
+| HEX(decimal_num)            | 转十六进制                                                                                                                             |
+| LEAST(num_1,num_2 [,..])    | 求最小值                                                                                                                               |
+| MOD(numerator,denominator)  | 求余                                                                                                                                   |
+| RAND([seed])                | 随机数；其范围是：0 ≦ v ≦ 1.0 。 rand()返回一个随机浮点值v，范围在0到1之间。若已指定一个整数参数N,则它被用作种子值，用来参赛重复序列。 |
+
+> *练习：*
+
+``` SQL
+-- ABS(num) 绝对值
+SELECT ABS(-10) ; -- 10
+
+-- BIN(decimal_num) 十进制转二进制
+SELECT BIN(3) ; -- 11
+-- HEX(decimal_num) 转十六进制
+SELECT HEX(26) ; -- 1A
+-- CONV(num,from_base,to_base) 进制转换
+-- 下面的含义是： 8 是十进制的8，转成8进制输出
+SELECT CONV(8,10,8) ; -- 10
+
+-- CEILING(num) 向上取整，得到比num2大的最小整数
+SELECT CEILING(1.1) ; -- 2
+-- FLOOR(num) 向下取整，得到比num小的最大整数
+SELECT FLOOR(1.1) ; -- 1
+
+-- MOD(numerator,denominator)求余
+SELECT MOD(10,3) ; -- 1
+-- RAND([seed]) 其范围是：0 ≦ v ≦ 1.0 。
+SELECT RAND() ; -- 0.1685401212131047
+SELECT RAND(3) ; -- 0.9057697559760601
+
+-- FORMAT(num,decimal_places)	保留小数位
+SELECT FORMAT(0.9057697559760601,2) ; -- 0.91
+
+-- LEAST(num_1,num_2 [,..]) 求最小值
+SELECT LEAST(1,2,3,0.5) ; -- 0.5
+
+```
+
 ### 1.6.4. 时间日期
 
 ### 1.6.5. 流程控制
