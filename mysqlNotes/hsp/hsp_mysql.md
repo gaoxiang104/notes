@@ -4,6 +4,7 @@
   - [1.1. MySQL安装和配置](#11-mysql安装和配置)
     - [1.1.1. 修改root用户密码](#111-修改root用户密码)
     - [1.1.2. 使用命令行窗口连接 MySQL 数据库](#112-使用命令行窗口连接-mysql-数据库)
+    - [1.1.3. mysql 参考手册地址](#113-mysql-参考手册地址)
   - [1.2. 数据库](#12-数据库)
     - [1.2.1. 三层结构](#121-三层结构)
     - [1.2.2. SQL语句分类](#122-sql语句分类)
@@ -81,6 +82,10 @@ Step3： 再次修改`my.conf`配置文件，关闭`skip-grant-table`，重启 M
 - `-p`后面不能有空格，直接输入`密码`;
 - `-h`默认是`localhost`;
 - `-P`默认是`3306`;
+
+### 1.1.3. mysql 参考手册地址
+
+[mysql5.7 参考手册地址:  https://dev.mysql.com/doc/refman/5.7/en/](https://dev.mysql.com/doc/refman/5.7/en/)
 
 ## 1.2. 数据库
 
@@ -935,6 +940,72 @@ SELECT LEAST(1,2,3,0.5) ; -- 0.5
 ```
 
 ### 1.6.4. 时间日期
+
+| 函数                                    | 说明                                              |
+| --------------------------------------- | ------------------------------------------------- |
+| CURRENT_DATE()                          | 当前日期                                          |
+| CURRENT_TIME()                          | 当前时间                                          |
+| CURRENT_TIMESTAMP()                     | 当前时间戳                                        |
+| DATE(datetime)                          | 返回datetime的日期部分                            |
+| DATE_ADD(date2,INTERVAL d_value d_type) | 在date2中加上日期或时间                           |
+| DATE_SUB(date2,INTERVAL d_value d_type) | 在date2中减去日期或时间                           |
+| DATEDIFF(date1,date2)                   | 两个日期差（结果是天）                            |
+| TIMEDIFF(date1,date2)                   | 两个时间差（多少小时多少分钟多少秒）              |
+| NOW()                                   | 当前时间                                          |
+| YEAR / MONTH / DAY / DATE(datetime)     | 年月日                                            |
+| UNIX_TIMESTAMP()                        | 返回1970-1-1 到现在的秒数                         |
+| FROM_UNIXTIME()                         | 可以把一个unix_timestamp 秒数，转成指定格式的日期 |
+| DATE_FORMAT(date,format)                | 日期格式化，返回一个string                        |
+
+
+- 说明
+
+  - `DATE_ADD()` 中的 `interval` 后面的 `d_type` 可以是 `YEAR`, `MONTH`, `DAY`, `HOUR`, `MINUTE`, `SECOND`。
+  - DATEDIFF() 得到的是天数，而且是 date1 - date2 的天数，因此可以取负数 。
+  - DATE() DATE_ADD() DATE_SUB() DATEDIFF() 函数的日期类型可以是 date, datetime, timestamp
+
+> *练习：*
+
+``` SQL
+-- DDL
+CREATE TABLE msg (
+  id INT(11) NOT NULL , 
+  content VARCHAR(64) NOT NULL COMMENT '内容',
+  send_time DATETIME NOT NULL COMMENT '发送时间'
+) COMMENT '消息表';
+-- DML
+INSERT INTO msg VALUES 
+  (1,'北京新闻',CURRENT_TIMESTAMP()),
+  (2,'上海新闻',NOW()),
+  (3,'广州新闻',NOW());
+
+-- DQL
+-- 显示所有新闻信息，发布日期只显示 日期，不显示时间
+SELECT id , content , DATE(send_time) FROM msg;
+-- 查询在10分钟内发布的新闻
+SELECT * FROM msg WHERE DATE_ADD(send_time, INTERVAL 10 MINUTE) >= NOW();
+SELECT * FROM msg WHERE DATE_ADD(NOW(), INTERVAL -10 MINUTE) <= send_time;
+SELECT * FROM msg WHERE DATE_SUB(NOW(), INTERVAL 10 MINUTE ) <= send_time;
+-- 在mysql的sql语句中求出 2011-11-11 和 1990-1-1  相差多少天
+SELECT DATEDIFF('2011-11-11','1990-01-01');
+SELECT DATEDIFF('2022-12-31',CURRENT_DATE());
+-- 在mysql的sql语句中求出你活了多少天？
+SELECT DATEDIFF(CURRENT_DATE(),'1990-01-04');
+-- 如果你能活到80岁，求出你还能活多少天？
+SELECT DATEDIFF(DATE_ADD('1990-01-04', INTERVAL 80 YEAR),CURRENT_DATE());
+
+-- YEAR(date) MONTH(date) DATE(date)
+SELECT YEAR(NOW()) AS 'YEAR', MONTH(NOW()) AS 'MONTH' , DAY(NOW()) AS 'DAY' , DATE(NOW()) AS 'DATE';
+
+-- UNIX_TIMESTAMP() 返回1970-1-1 到现在的毫秒数
+SELECT UNIX_TIMESTAMP();
+SELECT UNIX_TIMESTAMP() / 365 / 24 / 3600; -- 计算 1970-1-1 到现在多少年
+-- FROM_UNIXTIME() 可以把一个unix_timestamp 秒数，转成指定格式的日期 
+SELECT FROM_UNIXTIME(1655824383,'%Y-%m-%d %h:%i:%s.%x');
+
+-- 日期格式化，返回一个字符串
+SELECT DATE_FORMAT(NOW(),'%Y-%m-%d %h:%i:%s');
+```
 
 ### 1.6.5. 流程控制
 
