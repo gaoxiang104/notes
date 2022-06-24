@@ -40,7 +40,8 @@
     - [1.6.2. 字符串函数](#162-字符串函数)
     - [1.6.3. 数学函数](#163-数学函数)
     - [1.6.4. 时间日期](#164-时间日期)
-    - [1.6.5. 流程控制](#165-流程控制)
+    - [1.6.5. 系统函数和加密](#165-系统函数和加密)
+    - [1.6.6. 流程控制](#166-流程控制)
   - [1.7. 内连接](#17-内连接)
   - [1.8. 外连接](#18-外连接)
   - [1.9. 约束](#19-约束)
@@ -1007,7 +1008,68 @@ SELECT FROM_UNIXTIME(1655824383,'%Y-%m-%d %h:%i:%s.%x');
 SELECT DATE_FORMAT(NOW(),'%Y-%m-%d %h:%i:%s');
 ```
 
-### 1.6.5. 流程控制
+### 1.6.5. 系统函数和加密
+
+| 函数          | 说明                                                                   |
+| ------------- | ---------------------------------------------------------------------- |
+| USER()        | 查询用户                                                               |
+| DATABASE()    | 数据库名称                                                             |
+| MD5(str)      | 为字符串算出一个 MD5 32位的字符串                                      |
+| PASSWORD(str) | 从原文密码str计算并返回密码字符串，通常用于对mysql数据库的用户密码加密 |
+
+> *练习：*
+
+``` SQL
+-- DDL
+CREATE TABLE user (
+  id INT(11) NOT NULL , 
+  name VARCHAR(64) NOT NULL COMMENT '用户名',
+  pwd CHAR(32) NOT NULL COMMENT '密码'
+) COMMENT '用户表';
+
+-- DML
+INSERT INTO user VALUES (1,'gx',MD5('123456'));
+
+-- DQL
+-- USER() 查询用户: 用户@IP地址，可以查看登录到mysql的有哪些用户，以及登陆的IP
+SELECT USER();
+-- DATABASE() 数据库名称
+SELECT DATABASE();
+-- MD5(str) 为字符串算出一个 MD5 32位的字符串 
+SELECT MD5('123456');
+SELECT LENGTH(MD5('123456'));
+-- PASSWORD(str)
+SELECT PASSWORD('1234');
+SELECT * FROM mysql.user;
+
+```
+
+### 1.6.6. 流程控制
+
+| 函数                                                                    | 说明                                                                     |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| IF(expr1,expr2,expr3)                                                   | 如果expr1为true，则返回expr2，否则返回expr3                              |
+| IFNULL(expr1,expr2)                                                     | 如果expr1不为空，则返回expr1，否则返回expr2                              |
+| SELECT CASE WHEN expr1 THEN expr2 WHEN expr3 THEN expr4 ELSE expr5 END; | 如果expr1为 true，d返回expr2，如果expr3为true，返回expr4，否则返回 expr5 |
+
+> *练习：*
+
+``` SQL
+-- DQL
+-- IF(expr1,expr2,expr3)
+SELECT IF(TRUE,'true','false');
+SELECT IF(FALSE,'true','false');
+-- IFNULL(expr1,expr2)
+SELECT IFNULL(comm,0) FROM emp;
+-- CASE WHEN THEN ELSE END
+SELECT emp_name,CASE WHEN sal>700 AND sal<1200 THEN '1级' ELSE '高于1级' END FROM emp;
+
+-- 查询emp表，如果 comm 是null , 则显示0.0
+SELECT emp_name, sal, IFNULL(comm,'0.0') AS comm FROM emp ;
+-- 如果emp表的 job 是 clerk 则显示 职员，如果是 manager 则显示 经理 ， 如果是 salesman 则显示 销售人员 ， 其他正常显示
+SELECT emp_name, CASE WHEN job='CLERK' THEN '职员' WHEN job='MANAGER' THEN '经理' WHEN job='SALESMAN' THEN '销售人员' ELSE job END AS 'job' FROM emp ;
+
+```
 
 ## 1.7. 内连接
 
