@@ -28,8 +28,12 @@
     - [1.5.4. Select](#154-select)
       - [1.5.4.1. SELECT 查询](#1541-select-查询)
       - [1.5.4.2. WHERE 子句](#1542-where-子句)
+        - [1.5.4.2.1. LIKE 使用](#15421-like-使用)
+        - [1.5.4.2.2. IS NULL 和 IS NOT NULL](#15422-is-null-和-is-not-null)
       - [1.5.4.3. order by 子句](#1543-order-by-子句)
       - [1.5.4.4. GROUP BY 子句](#1544-group-by-子句)
+      - [1.5.4.5. 分页查询](#1545-分页查询)
+      - [1.5.4.6. 多子句查询](#1546-多子句查询)
   - [1.6. 函数](#16-函数)
     - [1.6.1. 统计/合计函数](#161-统计合计函数)
       - [1.6.1.1. 统计函数 - COUNT](#1611-统计函数---count)
@@ -542,6 +546,65 @@ DELETE FROM `employee`;
 
 ### 1.5.4. Select
 
+> *用于查询练习的表和数据：*
+
+``` SQL
+DROP TABLE IF EXISTS `dept` ;
+CREATE TABLE `dept` (
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号',
+  dept_name VARCHAR(64) NOT NULL COMMENT '部门编号',
+  loc VARCHAR(64) NOT NULL COMMENT '位置'
+) COMMENT '部门表';
+
+INSERT INTO `dept` VALUES 
+  (10,'ACCOUNTING','NEW YORK'),
+  (20,'RESEARCH','DALLAS'),
+  (30,'SALES','CHICAGO'),
+  (40,'OPERATIONS','BOSTON');
+
+DROP TABLE IF EXISTS `emp` ;
+CREATE TABLE `emp` (
+  emp_no INT UNSIGNED NOT NULL COMMENT '编号',
+  emp_name VARCHAR(64) NOT NULL COMMENT '名字',
+  job VARCHAR(64) NOT NULL COMMENT '工作',
+  mgr INT UNSIGNED COMMENT '上级编号',
+  hire_date DATE NOT NULL COMMENT '入职时间',
+  sal DECIMAL(7,2) NOT NULL COMMENT '薪水',
+  comm DECIMAL(7,2) COMMENT '红利',
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号'
+) COMMENT '员工表';
+
+INSERT INTO `emp` VALUES 
+  (7369,'SMITH','CLERK',7902,'1990-12-17',800,NULL,20),
+  (7499,'ALLEN','SALESMAN',7698,'1991-2-20',1600,300,30),
+  (7521,'WARD','SALESMAN',7698,'1991-2-22',1250,500,30),
+  (7566,'JONES','MANGER',7839,'1991-4-2',2975,NULL,20),
+  (7654,'MARTIN','SALESMAN',7698,'1991-9-28',1250,1400,30),
+  (7698,'BLAKE','MANAGER',7839,'1991-5-1',2850,NULL,30),
+  (7782,'CLARK','MANAGER',7839,'1991-6-9',2450,NULL,10),
+  (7788,'SCOTT','ANALYST',7566,'1997-4-19',3000,NULL,20),
+  (7839,'KING','PRESIDENT',NULL,'1991-11-17',5000,NULL,16),
+  (7844,'TURNER','SALESMAN',7698,'1991-9-8',1500,NULL,30),
+  (7900,'JAMES','CLERK',7698,'1991-12-3',950,NULL,30),
+  (7902,'FORD','ANALYST',7566,'1991-12-3',3000,NULL,20),
+  (7934,'MILLER','CLERK',7782,'1992-1-23',1300,NULL,10);
+
+DROP TABLE IF EXISTS `sal_grade`;
+CREATE TABLE `sal_grade` (
+  grade INT UNSIGNED NOT NULL COMMENT '级别',
+  low_sal DECIMAL(7,2) NOT NULL COMMENT '最低工资',
+  hight_sal DECIMAL(7,2) NOT NULL COMMENT '最高工资'
+) COMMENT '工资级别表';
+
+INSERT INTO `sal_grade` VALUES 
+  (1,700,1200),
+  (2,1201,1400),
+  (3,1401,2000),
+  (4,2001,3000),
+  (5,3001,9999);
+
+```
+
 #### 1.5.4.1. SELECT 查询
 
 ``` sql
@@ -667,6 +730,31 @@ SELECT * FROM student WHERE `math` > 80  AND `chinese` > 80 ;
 
 ```
 
+##### 1.5.4.2.1. LIKE 使用
+
+- 如何使用like操作符：
+  - `%`：表示0到多个字符；
+  - `_`：表示单个字符；
+
+> *练习：*
+
+``` SQL
+-- 查询 首字母为S的员工
+SELECT * FROM emp WHERE emp_name LIKE 'S%';
+-- 查询 第三个字母为O的所有员工
+SELECT * FROM emp WHERE emp_name LIKE '__O%';
+```
+
+##### 1.5.4.2.2. IS NULL 和 IS NOT NULL
+
+``` SQL
+-- 查询 没有上级的雇员的情况
+SELECT * FROM emp WHERE mgr IS NULL;
+-- 查询 有分红的雇员
+SELECT * FROM emp WHERE comm IS NOT NULL;
+
+```
+
 #### 1.5.4.3. order by 子句
 
 ``` sql
@@ -690,6 +778,8 @@ SELECT *,(`chinese` + `english` + `math`) AS 'total_score'FROM student ORDER BY 
 -- 对姓李的学生成绩排序输出【升序】
 SELECT *,(`chinese` + `english` + `math`) AS 'total_score'FROM student WHERE `name` LIKE '李%' ORDER BY `total_score`;
 
+-- 按照部门号升序而雇员的工资将序排列，显示雇员信息
+SELECT * FROM emp ORDER BY dept_no ASC, sal DESC ;
 ```
 
 #### 1.5.4.4. GROUP BY 子句
@@ -707,72 +797,80 @@ SELECT column_1, column_2 .. FROM table_name GROUP BY column HAVING ...;
 > *练习：*
 
 ``` SQL
-DROP TABLE IF EXISTS `dept` ;
-CREATE TABLE `dept` (
-  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号',
-  dept_name VARCHAR(64) NOT NULL COMMENT '部门编号',
-  loc VARCHAR(64) NOT NULL COMMENT '位置'
-) COMMENT '部门表';
-
-INSERT INTO `dept` VALUES 
-  (10,'ACCOUNTING','NEW YORK'),
-  (20,'RESEARCH','DALLAS'),
-  (30,'SALES','CHICAGO'),
-  (40,'OPERATIONS','BOSTON');
-
-DROP TABLE IF EXISTS `emp` ;
-CREATE TABLE `emp` (
-  emp_no INT UNSIGNED NOT NULL COMMENT '编号',
-  emp_name VARCHAR(64) NOT NULL COMMENT '名字',
-  job VARCHAR(64) NOT NULL COMMENT '工作',
-  mgr INT UNSIGNED COMMENT '上级编号',
-  hire_date DATE NOT NULL COMMENT '入职时间',
-  sal DECIMAL(7,2) NOT NULL COMMENT '薪水',
-  comm DECIMAL(7,2) COMMENT '红利',
-  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号'
-) COMMENT '员工表';
-
-INSERT INTO `emp` VALUES 
-  (7369,'SMITH','CLERK',7902,'1990-12-17',800,NULL,20),
-  (7499,'ALLEN','SALESMAN',7698,'1991-2-20',1600,300,30),
-  (7521,'WARD','SALESMAN',7698,'1991-2-22',1250,500,30),
-  (7566,'JONES','MANGER',7839,'1991-4-2',2975,NULL,20),
-  (7654,'MARTIN','SALESMAN',7698,'1991-9-28',1250,1400,30),
-  (7698,'BLAKE','MANAGER',7839,'1991-5-1',2850,NULL,30),
-  (7782,'CLARK','MANAGER',7839,'1991-6-9',2450,NULL,10),
-  (7788,'SCOTT','ANALYST',7566,'1997-4-19',3000,NULL,20),
-  (7839,'KING','PRESIDENT',NULL,'1991-11-17',5000,NULL,16),
-  (7844,'TURNER','SALESMAN',7698,'1991-9-8',1500,NULL,30),
-  (7900,'JAMES','CLERK',7698,'1991-12-3',950,NULL,30),
-  (7902,'FORD','ANALYST',7566,'1991-12-3',3000,NULL,20),
-  (7934,'MILLER','CLERK',7782,'1992-1-23',1300,NULL,10);
-
-DROP TABLE IF EXISTS `sal_grade`;
-CREATE TABLE `sal_grade` (
-  grade INT UNSIGNED NOT NULL COMMENT '级别',
-  low_sal DECIMAL(7,2) NOT NULL COMMENT '最低工资',
-  hight_sal DECIMAL(7,2) NOT NULL COMMENT '最高工资'
-) COMMENT '工资级别表';
-
-INSERT INTO `sal_grade` VALUES 
-  (1,700,1200),
-  (2,1201,1400),
-  (3,1401,2000),
-  (4,2001,3000),
-  (5,3001,9999);
-
-```
-
-> *练习：*
-
-``` SQL
 -- 查询每个部门的平均工资和最高工资
 SELECT dept_no, AVG(sal) AS dept_avg_sal, MAX(sal) AS dept_max_sal FROM `emp` GROUP BY dept_no ;
 -- 查询每个部门的每种岗位的平均工资和最低工资
 SELECT dept_no,job, AVG(sal) AS dept_avg_sal, MIN(sal) AS dept_min_sal FROM `emp` GROUP BY dept_no, job ;
 -- 查询平均工资低于2000的部门编号和它的平均工资
 SELECT dept_no, AVG(sal) AS dept_avg_sal FROM `emp` GROUP BY dept_no HAVING dept_avg_sal < 2000;
+```
 
+> *加强练习：*
+
+``` SQL
+-- 查询每种岗位的雇员总数，平均工资。
+SELECT job, COUNT(emp_no), AVG(sal) FROM emp GROUP BY job;
+
+-- 查询雇员总数，以及获得补助的员工数，就是 comm 列为null。
+SELECT  COUNT(*), COUNT(comm) FROM emp ; -- 注意：count会排除null
+-- 查询雇员总数，以及没有获得补助的员工数，就是 comm 列为非null。
+SELECT  COUNT(*), COUNT(IF(comm IS NULL, 1, NULL)) FROM emp ;
+SELECT  COUNT(*), COUNT(*) - COUNT(comm) FROM emp ;
+
+-- 查询管理者的总人数
+SELECT COUNT(DISTINCT mgr) FROM emp ; -- 注意：count会排除null
+SELECT DISTINCT mgr FROM emp ; -- 显示6个
+SELECT mgr FROM emp GROUP BY mgr; -- 显示6个
+
+-- 查询雇员工资的最大差额
+SELECT MAX(sal), MIN(sal), MAX(sal) - MIN(sal) FROM emp ;
+```
+
+#### 1.5.4.5. 分页查询
+
+``` SQL
+-- limit 简单使用
+SELECT ... LIMIT [rows];
+-- 表示只取前出rows行
+
+-- 分页查询：
+SELECT ... LIMIT [start],[rows];
+-- 表示从 start+1 行开始取，取出rows行,start 从0开始计算
+```
+
+> *练习：*
+
+``` SQL
+-- 按雇员的emp_no号升序取出，每页显示3条记录，请分别显示 第一页，第二页，第三页
+-- page:1 , start = (1-1)*3 = 0
+SELECT * FROM emp ORDER BY emp_no LIMIT 0,3;
+-- page:2 , start = (2-1)*3 = 3
+SELECT * FROM emp ORDER BY emp_no LIMIT 3,3;
+-- page:3 , start = (3-1)*3 = 6
+SELECT * FROM emp ORDER BY emp_no LIMIT 6,3;
+```
+
+#### 1.5.4.6. 多子句查询
+
+``` SQL
+-- 多子句查询
+SELECT column_1, column_2, column_3.. FROM table_name
+    WHERE condition
+    GROUP BY column 
+    HAVING condition
+    ORDER BY column
+    LIMIT start , rows ;
+```
+
+> *练习：*
+
+``` SQL
+-- 查询各个部门的平均工资，并且是大于1000的，并且按照平均工资从高到低排序，取出前两行记录
+SELECT dept_no, AVG(sal) AS avg_sal FROM emp 
+  GROUP BY dept_no 
+  HAVING avg_sal > 1000 
+  ORDER BY avg_sal DESC 
+  LIMIT 2;
 ```
 
 ## 1.6. 函数
