@@ -46,20 +46,29 @@
     - [1.6.4. 时间日期](#164-时间日期)
     - [1.6.5. 系统函数和加密](#165-系统函数和加密)
     - [1.6.6. 流程控制](#166-流程控制)
-  - [1.7. 内连接](#17-内连接)
-  - [1.8. 外连接](#18-外连接)
-  - [1.9. 约束](#19-约束)
-    - [1.9.1. not null](#191-not-null)
-    - [1.9.2. primary key](#192-primary-key)
-    - [1.9.3. unique](#193-unique)
-    - [1.9.4. foreign key](#194-foreign-key)
-    - [1.9.5. check](#195-check)
-    - [1.9.6. 自增长](#196-自增长)
-  - [1.10. 索引](#110-索引)
-    - [1.10.1. 唯一索引（UNIQUE）](#1101-唯一索引unique)
-    - [1.10.2. 普通索引（INDEXs）](#1102-普通索引indexs)
-    - [1.10.3. 全文索引](#1103-全文索引)
-  - [1.11. 事物](#111-事物)
+  - [1.7. 多表查询](#17-多表查询)
+    - [1.7.1. 笛卡尔集](#171-笛卡尔集)
+    - [1.7.2. 多表查询案例](#172-多表查询案例)
+    - [1.7.3. 自连接](#173-自连接)
+    - [1.7.4. 子查询](#174-子查询)
+      - [1.7.4.1. 临时表](#1741-临时表)
+      - [1.7.4.2. all操作符 和 any操作符](#1742-all操作符-和-any操作符)
+      - [1.7.4.3. 多列子查询](#1743-多列子查询)
+      - [1.7.4.4. 子查询练习](#1744-子查询练习)
+  - [1.8. 内连接](#18-内连接)
+  - [1.9. 外连接](#19-外连接)
+  - [1.10. 约束](#110-约束)
+    - [1.10.1. not null](#1101-not-null)
+    - [1.10.2. primary key](#1102-primary-key)
+    - [1.10.3. unique](#1103-unique)
+    - [1.10.4. foreign key](#1104-foreign-key)
+    - [1.10.5. check](#1105-check)
+    - [1.10.6. 自增长](#1106-自增长)
+  - [1.11. 索引](#111-索引)
+    - [1.11.1. 唯一索引（UNIQUE）](#1111-唯一索引unique)
+    - [1.11.2. 普通索引（INDEXs）](#1112-普通索引indexs)
+    - [1.11.3. 全文索引](#1113-全文索引)
+  - [1.12. 事物](#112-事物)
 
 ## 1.1. MySQL安装和配置
 
@@ -190,6 +199,12 @@ CREATE DATABASE xgo_03 CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
   
   ``` shell
   mysql> SHOW DATABASES;
+  ```
+
+- 显示当前所在数据库：
+  
+  ``` shell
+  mysql> SELECT database();
   ```
 
 - 显示数据库创建语句：
@@ -1169,30 +1184,170 @@ SELECT emp_name, CASE WHEN job='CLERK' THEN '职员' WHEN job='MANAGER' THEN '�
 
 ```
 
-## 1.7. 内连接
+## 1.7. 多表查询
 
-## 1.8. 外连接
+多表查询是指基于两个和两个以上的表查询。在实际应用中，查询单个表可能不能满足需求。
 
-## 1.9. 约束
+### 1.7.1. 笛卡尔集
 
-### 1.9.1. not null
+> *练习：*
 
-### 1.9.2. primary key
+``` SQL
+-- ？显示雇员名，雇员工资及所在部门的名字【笛卡尔集】
+SELECT * FROM emp e, dept d; -- 【笛卡尔集】
+SELECT e.emp_name, e.sal, d.dept_name FROM emp e , dept d WHERE e.dept_no = d.dept_no;
+```
 
-### 1.9.3. unique
+- 说明，在默认情况下，对两张表进行查询，规则如下：
+  - 从第一张表中，取出一行和第二张表的每一行进行组合，返回结果【含有两种表的所有列】
+  - 一共返回的记录数 = 第一张表的行数 * 第二张表的行数
+  - 这样的多表查询默认处理返回的结果，称为 **【笛卡尔集】**
 
-### 1.9.4. foreign key
+> *技巧：* 多表查询的条件不能少于 *表的个数-1*，否则会出现笛卡尔集。
 
-### 1.9.5. check
+### 1.7.2. 多表查询案例
 
-### 1.9.6. 自增长
+> *练习：*
 
-## 1.10. 索引
+``` SQL
+-- 如何显示部门号为10到部门名、员工名 和 工资
+SELECT d.dept_no, d.dept_name, e.emp_name, e.sal FROM emp e , dept d WHERE e.dept_no = d.dept_no AND d.dept_no = 10;
+-- 显示各个员工的姓名，工资，及其工资级别
+SELECT e.emp_name, e.sal, sg.grade FROM emp e , sal_grade sg WHERE e.sal >= sg.low_sal AND e.sal <= sg.hight_sal;
+-- 显示雇员名，雇员工资及所在部门的名字，并按部门排序【降序】
+SELECT e.emp_name, e.sal, d.dept_name FROM emp e, dept d WHERE e.dept_no = d.dept_no ORDER BY d.dept_name DESC;
+```
 
-### 1.10.1. 唯一索引（UNIQUE）
+### 1.7.3. 自连接
 
-### 1.10.2. 普通索引（INDEXs）
+自连接是指在同一张表的连接查询【将同一张表看做两张表】。
 
-### 1.10.3. 全文索引
+> *练习：*
 
-## 1.11. 事物
+``` SQL
+-- 查询雇员名字和他上级的名字
+SELECT e1.emp_name, e2.emp_name AS mgr_name FROM emp e1, emp e2 WHERE e1.mgr = e2.emp_no;
+```
+
+### 1.7.4. 子查询
+
+- 什么是子查询？
+  - 子查询是指嵌入在其他sql语句中的select语句，也叫嵌套查询
+- 单行子查询
+  - 单行子查询是指只返回一行数据的子查询语句
+- 多行子查询
+  - 多行子查询指返回多行数据的子查询，使用关键字`IN`
+
+> *练习：*
+
+``` SQL
+-- 查询显示与SMITH同一个部门的所有员工
+SELECT * FROM emp e WHERE e.dept_no = (SELECT e1.dept_no FROM emp e1 WHERE e1.emp_name = 'SMITH');
+-- 查询和部门10的工作相同的雇员的名字、岗位、工资、部门号，但是不含10部门自己的.
+SELECT DISTINCT e.job FROM emp e WHERE e.dept_no = 10;
+SELECT e.emp_name, e.job, e.sal, e.dept_no FROM emp e WHERE  e.dept_no <> 10 AND e.job IN (SELECT DISTINCT e.job FROM emp e WHERE e.dept_no = 10);
+```
+
+#### 1.7.4.1. 临时表
+
+子查询当做临时表使用。
+
+> *练习：*
+
+``` SQL
+-- 查询各部门工资最高的人
+  -- 查询某部门工资最高的人
+SELECT e.dept_no, MAX(e.sal) AS 'max_sal' FROM emp e GROUP BY e.dept_no;
+
+SELECT e.* FROM emp e , 
+  (SELECT e1.dept_no, MAX(e1.sal) AS 'max_sal' FROM emp e1 GROUP BY e1.dept_no) e2
+WHERE  e.dept_no = e2.dept_no AND e.sal = e2.max_sal ORDER BY dept_no;
+
+-- 查询各部门工资前三的员工
+SELECT e.* FROM emp e 
+WHERE (
+  SELECT COUNT(DISTINCT e1.sal) FROM emp e1 WHERE e1.dept_no = e.dept_no AND e1.sal > e.sal
+) < 3 ORDER BY dept_no , sal DESC;
+```
+
+#### 1.7.4.2. all操作符 和 any操作符
+
+> *练习：all操作符*
+
+``` SQL
+-- 查询工资比部门30的所有员工的工资高的员工的姓名、工资和部门号
+SELECT e.emp_name, e.sal, e.dept_no FROM emp e WHERE e.sal > ALL(SELECT sal FROM emp WHERE dept_no=30);
+-- 也可以使用max函数代替
+SELECT e.emp_name, e.sal, e.dept_no FROM emp e WHERE e.sal > (SELECT MAX(DISTINCT sal) FROM emp WHERE dept_no=30);
+```
+
+> *练习：any操作符*
+
+``` SQL
+-- 查询工资比部门30的其中一个员工的工资高的员工的姓名、工资和部门号
+SELECT e.emp_name, e.sal, e.dept_no FROM emp e WHERE e.sal > ANY(SELECT sal FROM emp WHERE dept_no=30);
+-- 也可以使用MIN函数代替
+SELECT e.emp_name, e.sal, e.dept_no FROM emp e WHERE e.sal > (SELECT MIN(DISTINCT sal) FROM emp WHERE dept_no=30);
+```
+
+#### 1.7.4.3. 多列子查询
+
+`多列子查询`是指查询返回多个列数据的子查询语句。
+
+> *练习：*
+
+``` SQL
+-- 查询与ALLEN的部门和岗位完全相同的所有雇员（并且不含ALLEN本人）
+SELECT * FROM emp WHERE (dept_no, job) = (SELECT dept_no, job FROM emp WHERE emp_name='ALLEN') AND emp_name<>'ALLEN';
+ ```
+
+#### 1.7.4.4. 子查询练习
+
+> *练习：*
+
+``` SQL
+-- 查找每个部门工资高于本部门平均工资的雇员信息
+  -- 普通子查询方式
+SELECT e.* FROM emp e WHERE e.sal > (SELECT avg(e1.sal) FROM emp e1 WHERE e1.dept_no = e.dept_no);
+  -- 临时表方式
+SELECT e.* FROM emp e, (SELECT dept_no, AVG(sal) AS avg_sal FROM emp GROUP BY dept_no) t2 WHERE e.dept_no = t2.dept_no AND e.sal > t2.avg_sal;
+
+-- 查询每个部门工资最高的雇员信息
+  -- 临时表方式
+SELECT e.* FROM emp e, (SELECT dept_no, MAX(sal) AS avg_sal FROM emp GROUP BY dept_no) t2 WHERE e.dept_no = t2.dept_no AND e.sal = t2.avg_sal;
+  -- 统计工资在部门中排名的方式：比如部门最高工资就意味着部门中工资大于等于自己工资的只有一个人（自己）；
+SELECT e.* FROM emp e WHERE (SELECT COUNT(DISTINCT sal) FROM emp e1 WHERE e1.dept_no=e.dept_no AND e1.sal>=e.sal ) = 1 ;
+
+-- 查询每个部门的信息（包括：部门名，编号，地址）和人员数量
+SELECT d.dept_no, d.dept_name, d.loc, t.dept_count FROM dept d ,
+  (SELECT dept_no, COUNT(emp_no) AS dept_count FROM emp GROUP BY dept_no) t
+WHERE d.dept_no = t.dept_no;
+```
+
+## 1.8. 内连接
+
+## 1.9. 外连接
+
+## 1.10. 约束
+
+### 1.10.1. not null
+
+### 1.10.2. primary key
+
+### 1.10.3. unique
+
+### 1.10.4. foreign key
+
+### 1.10.5. check
+
+### 1.10.6. 自增长
+
+## 1.11. 索引
+
+### 1.11.1. 唯一索引（UNIQUE）
+
+### 1.11.2. 普通索引（INDEXs）
+
+### 1.11.3. 全文索引
+
+## 1.12. 事物
