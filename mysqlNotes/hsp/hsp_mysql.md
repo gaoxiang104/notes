@@ -59,20 +59,21 @@
       - [1.7.4.2. all操作符 和 any操作符](#1742-all操作符-和-any操作符)
       - [1.7.4.3. 多列子查询](#1743-多列子查询)
       - [1.7.4.4. 子查询练习](#1744-子查询练习)
-  - [1.8. 内连接](#18-内连接)
-  - [1.9. 外连接](#19-外连接)
-  - [1.10. 约束](#110-约束)
-    - [1.10.1. not null](#1101-not-null)
-    - [1.10.2. primary key](#1102-primary-key)
-    - [1.10.3. unique](#1103-unique)
-    - [1.10.4. foreign key](#1104-foreign-key)
-    - [1.10.5. check](#1105-check)
-    - [1.10.6. 自增长](#1106-自增长)
-  - [1.11. 索引](#111-索引)
-    - [1.11.1. 唯一索引（UNIQUE）](#1111-唯一索引unique)
-    - [1.11.2. 普通索引（INDEXs）](#1112-普通索引indexs)
-    - [1.11.3. 全文索引](#1113-全文索引)
-  - [1.12. 事物](#112-事物)
+    - [1.7.5. 合并查询](#175-合并查询)
+    - [1.7.6. 外连接](#176-外连接)
+    - [1.7.7. 内连接](#177-内连接)
+  - [1.8. 约束](#18-约束)
+    - [1.8.1. not null](#181-not-null)
+    - [1.8.2. primary key](#182-primary-key)
+    - [1.8.3. unique](#183-unique)
+    - [1.8.4. foreign key](#184-foreign-key)
+    - [1.8.5. check](#185-check)
+    - [1.8.6. 自增长](#186-自增长)
+  - [1.9. 索引](#19-索引)
+    - [1.9.1. 唯一索引（UNIQUE）](#191-唯一索引unique)
+    - [1.9.2. 普通索引（INDEXs）](#192-普通索引indexs)
+    - [1.9.3. 全文索引](#193-全文索引)
+  - [1.10. 事物](#110-事物)
 
 ## 1.1. MySQL安装和配置
 
@@ -1397,30 +1398,88 @@ SELECT d.dept_no, d.dept_name, d.loc, t.dept_count FROM dept d ,
 WHERE d.dept_no = t.dept_no;
 ```
 
-## 1.8. 内连接
+### 1.7.5. 合并查询
 
-## 1.9. 外连接
+在实际应用中，为了合并多个 select 语句的结果，可以使用合集操作符号 `union` , `union all`;
 
-## 1.10. 约束
+- union all 
+  - 该操作符用于取得两个结果集的并集。当使用该操作符时，不会取消重复行。
+- union
+  - 该操作符用于取得两个结果集的并集。会去除重复记录。
 
-### 1.10.1. not null
+> *练习：*
 
-### 1.10.2. primary key
+``` SQL
+-- UNION ALL 不去重
+SELECT emp_name, sal, job FROM emp WHERE sal>2500 
+UNION ALL
+SELECT emp_name, sal, job FROM emp WHERE job='MANAGER';
+-- UNION 去重
+SELECT emp_name, sal, job FROM emp WHERE sal>2500 
+UNION
+SELECT emp_name, sal, job FROM emp WHERE job='MANAGER';
+```
 
-### 1.10.3. unique
+### 1.7.6. 外连接
 
-### 1.10.4. foreign key
+- 外连接
+  - 左外连接（如果左侧的表完全显示我们就说是左外连接）
+  - 右外连接（如果右侧的表完全显示我们就说是右外连接）
 
-### 1.10.5. check
+> *练习：*
 
-### 1.10.6. 自增长
+``` SQL
+-- 创建表 stu
+CREATE TABLE stu (id INT, name VARCHAR(32));
+INSERT INTO stu VALUES (1, 'jack'),(2, 'tom'),(3, 'kity'),(4, 'nono');
+-- 创建表 exam
+CREATE TABLE exam (id INT, grade INT);
+INSERT INTO exam VALUES (1, 56),(2, 76),(11, 8);
 
-## 1.11. 索引
+-- 使用左外连接（显示所有人的成绩，如果没有成绩，也要显示该人的姓名和ID，成绩为空）
+SELECT s.id, s.name, e.grade FROM stu s LEFT JOIN exam e ON s.id=e.id;
+-- 右连接（显示所有成绩，如果没有名字匹配，显示空）
+SELECT e.id, s.name, e.grade FROM stu s RIGHT JOIN exam e ON s.id=e.id;
 
-### 1.11.1. 唯一索引（UNIQUE）
+-- 练习：列出部门名称和一下部门的员工信息（名字和工作），同时列出哪些没有员工的部门
+-- 左连接
+SELECT d.dept_name, e.emp_name, e.job FROM dept d LEFT JOIN emp e ON d.dept_no = e.dept_no ORDER BY d.dept_no;
+-- 右连接
+SELECT d.dept_name, e.emp_name, e.job FROM emp e RIGHT JOIN dept d  ON d.dept_no = e.dept_no ORDER BY d.dept_no;
+```
 
-### 1.11.2. 普通索引（INDEXs）
+### 1.7.7. 内连接
 
-### 1.11.3. 全文索引
+> *练习：*
 
-## 1.12. 事物
+``` SQL
+-- 查询雇员信息，以及雇员所在部门信息
+-- INNER JOIN
+SELECT * FROM emp e INNER JOIN dept d ON e.dept_no = d.dept_no;
+-- 使用多表查询加where条件，等同于 inner join
+SELECT * FROM emp e , dept d WHERE e.dept_no = d.dept_no;
+```
+
+## 1.8. 约束
+
+### 1.8.1. not null
+
+### 1.8.2. primary key
+
+### 1.8.3. unique
+
+### 1.8.4. foreign key
+
+### 1.8.5. check
+
+### 1.8.6. 自增长
+
+## 1.9. 索引
+
+### 1.9.1. 唯一索引（UNIQUE）
+
+### 1.9.2. 普通索引（INDEXs）
+
+### 1.9.3. 全文索引
+
+## 1.10. 事物
