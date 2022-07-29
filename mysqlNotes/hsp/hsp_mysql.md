@@ -13,9 +13,11 @@
     - [1.2.5. 备份恢复数据库](#125-备份恢复数据库)
   - [1.3. 表](#13-表)
     - [1.3.1. 创建表](#131-创建表)
+      - [1.3.1.1. 使用LIKE进行表的创建](#1311-使用like进行表的创建)
     - [1.3.2. 删除表](#132-删除表)
     - [1.3.3. 修改表](#133-修改表)
     - [1.3.4. 查看表](#134-查看表)
+    - [1.3.5. 表复制](#135-表复制)
   - [1.4. MySQL数据类型](#14-mysql数据类型)
     - [1.4.1. 整数类型](#141-整数类型)
     - [1.4.2. 浮点类型](#142-浮点类型)
@@ -25,6 +27,8 @@
     - [1.5.1. Insert](#151-insert)
     - [1.5.2. Update](#152-update)
     - [1.5.3. Delete](#153-delete)
+      - [1.5.3.1. 清空表中的数据 TRUNCATE](#1531-清空表中的数据-truncate)
+      - [1.5.3.2. 删除表中的重复记录](#1532-删除表中的重复记录)
     - [1.5.4. Select](#154-select)
       - [1.5.4.1. SELECT 查询](#1541-select-查询)
       - [1.5.4.2. WHERE 子句](#1542-where-子句)
@@ -302,6 +306,12 @@ CREATE TABLE emp (
 INSERT INTO `emp` VALUES (1,'小妖怪','男','2000-11-11','2010-11-10 11:11:11','巡山的','3000.88','大王叫我来巡山');
 ```
 
+#### 1.3.1.1. 使用LIKE进行表的创建
+
+``` sql
+CREATE TABLE my_tab02 LIKE emp;
+```
+
 ### 1.3.2. 删除表
 
 ``` sql
@@ -395,6 +405,35 @@ ALTER TABLE `employee` CHANGE `name` `user_name` VARCHAR(50);
   ``` sql
   select * from information_schema.COLUMNS where table_name = '表名' and table_schema = '数据库名称';
   ```
+
+### 1.3.5. 表复制
+
+- 自我复制数据（蠕虫复制）
+  - 有时，为了对某个sql语句进行效率测试，我们需要海量数据时，可以使用此方法为表创建海量数据。
+
+> *练习 - 解答：*
+
+``` sql
+-- 为了对某个sql语句进行效率测试，我们需要海量数据时，可以使用此方法为表创建海量数据。
+
+-- 创建表
+CREATE TABLE my_tab01(
+  id INT,
+  `name` VARCHAR(32),
+  sal DECIMAL(7,2),
+  job VARCHAR(32),
+  dept_no INT
+);
+
+-- 演示如何自我复制
+-- 1，先把emp 表的记录复制到 my_tab01;
+INSERT INTO my_tab01 (id, `name`, sal, job, dept_no)  
+  SELECT e.emp_no, e.emp_name, e.sal, e.job, e.dept_no FROM emp e;
+-- 2, 自我复制
+INSERT INTO my_tab01 SELECT * FROM my_tab01;
+
+SELECT COUNT(*) FROM my_tab01;
+```
 
 ## 1.4. MySQL数据类型
 
@@ -557,6 +596,40 @@ DELETE FROM table_name [WHERE where_definition];
 DELETE FROM `employee` WHERE `user_name`='老妖怪';
 -- 删除表中所有记录。
 DELETE FROM `employee`;
+```
+
+#### 1.5.3.1. 清空表中的数据 TRUNCATE
+
+``` SQL
+TRUNCATE [table_name]
+```
+
+#### 1.5.3.2. 删除表中的重复记录
+
+> *练习：*
+
+``` SQL
+-- 创建一张表 my_tab02;
+DROP TABLE IF EXISTS my_tab02;
+CREATE TABLE my_tab02 LIKE emp;
+-- 插入两次emp数据进my_tab02
+INSERT INTO my_tab02 SELECT * FROM emp;
+INSERT INTO my_tab02 SELECT * FROM emp;
+
+-- 删除重复记录，思路：
+/*
+  （1）创建一张临时表 my_tmp, 该表的结构和 my_tab02一样
+  （2）把my_tab02 的记录 通过 district 关键字处理后的记录复制到 my_tmp
+  （3）清除掉my_tab02 记录
+  （4）把 my_tmp 表的记录复制到 my_tab02
+  （5）drop 掉 临时表my_tmp
+*/
+CREATE TABLE my_tmp LIKE my_tab02;
+INSERT INTO my_tmp SELECT DISTINCT * FROM my_tab02;
+TRUNCATE my_tab02;
+INSERT INTO my_tab02 SELECT * FROM my_tmp;
+DROP TABLE my_tmp;
+SELECT * FROM my_tab02;
 ```
 
 ### 1.5.4. Select
