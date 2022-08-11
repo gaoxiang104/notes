@@ -63,12 +63,14 @@
     - [1.7.6. 外连接](#176-外连接)
     - [1.7.7. 内连接](#177-内连接)
   - [1.8. 约束](#18-约束)
-    - [1.8.1. not null](#181-not-null)
-    - [1.8.2. primary key](#182-primary-key)
-    - [1.8.3. unique](#183-unique)
-    - [1.8.4. foreign key](#184-foreign-key)
-    - [1.8.5. check](#185-check)
-    - [1.8.6. 自增长](#186-自增长)
+    - [1.8.1. primary key（主键）](#181-primary-key主键)
+      - [1.8.1.1. 新增/删除/修改 主键](#1811-新增删除修改-主键)
+    - [1.8.2. not null (非空)](#182-not-null-非空)
+    - [1.8.4. unique （唯一）](#184-unique-唯一)
+    - [1.8.5. foreign key (外键)](#185-foreign-key-外键)
+    - [1.8.6. check](#186-check)
+    - [约束相关练习](#约束相关练习)
+    - [1.8.7. 自增长](#187-自增长)
   - [1.9. 索引](#19-索引)
     - [1.9.1. 唯一索引（UNIQUE）](#191-唯一索引unique)
     - [1.9.2. 普通索引（INDEXs）](#192-普通索引indexs)
@@ -1462,17 +1464,241 @@ SELECT * FROM emp e , dept d WHERE e.dept_no = d.dept_no;
 
 ## 1.8. 约束
 
-### 1.8.1. not null
+约束用于确保数据库的数据满足特定的商业规则。
 
-### 1.8.2. primary key
+在mysql中，约束包括：`not null`、`unique`、`primary key`、`foreign key` 和 `check` 五种
 
-### 1.8.3. unique
+### 1.8.1. primary key（主键）
 
-### 1.8.4. foreign key
+``` sql
+-- 基本使用
+字段名 字段类型 primary key 
+```
 
-### 1.8.5. check
+用于唯一的标示表行的数据，当定义主键约束后，*该列不能重复*。
 
-### 1.8.6. 自增长
+> *练习：*
+
+``` SQL
+-- 主键的使用
+CREATE TABLE t17 (
+  `id` INT PRIMARY KEY COMMENT '表示id列是主键',
+  `name` VARCHAR(32),
+  `email` VARCHAR(64)
+);
+-- 添加数据
+INSERT INTO t17 VALUES (1,'jack','jack@123.com');
+-- INSERT INTO t17 VALUES (1,'tom','tom@123.com'); -- 报错：主键重复
+-- INSERT INTO t17 VALUES (NULL,'xxx','xxx@123.com'); -- 报错：主键不能为空
+
+-- 创建复合主键
+CREATE TABLE t17_1 (
+  `id` INT COMMENT '表示id列是主键',
+  `name` VARCHAR(32),
+  `email` VARCHAR(64),
+  PRIMARY KEY (`id`,`name`)
+);
+```
+
+- 主键的细节
+  - primary key 不能重复而且不能为null；
+  - 一张表最多只能有一个主键，但可以是复合主键；
+  - 定义主键的方式有两种：
+    1. 直接在字段名后指定：`字段名 字段类型 PRIMARY KEY`
+    2. 在表定义最后写 PRIMARY KEY (列名...)
+  - 提醒：在实际开发中，美国表往往都会设计一个主键。
+
+#### 1.8.1.1. 新增/删除/修改 主键
+
+假设现在新建一张表，结构如下：
+
+``` SQL
+CREATE TABLE t17_2 (
+  `id` INT,
+  `name` VARCHAR(32),
+  `email` VARCHAR(64)
+);
+```
+
+> *练习：*
+
+``` SQL
+-- 新增主键
+-- 将没有主键的表t17_2 中 id 字段设为主键
+ALTER TABLE t17_2 ADD PRIMARY KEY (`id`);
+```
+
+> *练习：*
+
+``` SQL
+-- 删除主键
+-- 将没有主键的表t17_2 中 id 字段设为主键
+ALTER TABLE t17_2 DROP PRIMARY KEY;
+```
+
+> *练习：*
+
+``` SQL
+-- 修改主键，先删除表现有的主键，再新增
+ALTER TABLE t17_2 DROP PRIMARY KEY;
+ALTER TABLE t17_2 ADD PRIMARY KEY(`id`,`name`);
+```
+
+### 1.8.2. not null (非空)
+
+如果在列上定义了`NOT NULL`，那么当插入数据时，必须为列提供数据。
+
+### 1.8.4. unique （唯一）
+
+当定义了唯一约束后，该列值时不能重复的。
+
+- unique 使用细节
+  - 如果没有指定`NOT NULL`，则 UNIQUE 字段可以有多个NULL ;
+  - 一张表可以有多个 UNIQUE 字段 ;
+  - 如果一个列（字段），是 UNIQUE NOT NULL 使用效果类似 PRIMARY KEY ;
+
+> *练习：*
+
+``` SQL
+-- 创建 字段包含 unique 的 表
+CREATE TABLE t18 (
+  id INT UNIQUE ,
+  `name` VARCHAR(32)
+);
+
+-- 测试：id相同的两条数据能不能插入
+INSERT INTO t18 VALUES (1,'TOM');
+-- INSERT INTO t18 VALUES (1,'JACK'); -- 报错：ERROR 1062 (23000): Duplicate entry '1' for key 'id'
+
+-- 测试：如果没有指定`NOT NULL`，则 UNIQUE 字段可以有多个NULL
+INSERT INTO t18 VALUES (NULL,'JERRY');
+INSERT INTO t18 VALUES (NULL,'JERRY');
+
+
+```
+
+### 1.8.5. foreign key (外键)
+
+foreign key (外键) 用于定义主表和从表之间的关系：外键约束要定义在从表上，主表则必须具有主键约束或事unique约束；当定义外键约束后，要求外键列数据必须在主表的主键列存在或是为null。
+
+``` SQL
+-- 语法
+FOREIGN KEY (本表字段名) REFERENCES 主表名(主键名或unique字段名)
+```
+
+- foreign key (外键) —— 细节说明
+  1. 外键指向的表的字段，要求是primary key 或者是 unique；
+  2. 表的类型是innodb，这样的表才支持外键；
+  3. 外键字段的类型要和主键字段的类型一致（长度可以不同）；
+  4. 外键字段的值，比心在主键字段中出现过，或者为null [前提是外键字段允许为null]；
+  5. 一旦建立外键的关系，数据不能随意删除；
+
+> *练习：*
+
+``` SQL
+-- 创建主表
+CREATE TABLE my_class (
+  id INT PRIMARY KEY COMMENT '班级ID',
+  `name` VARCHAR(32) COMMENT '班级名称'
+);
+-- 创建外键表
+CREATE TABLE my_student (
+  id INT PRIMARY KEY COMMENT '学生ID',
+  `name` VARCHAR(32) COMMENT '学生姓名',
+  class_id INT COMMENT '班级ID',
+  FOREIGN KEY (class_id) REFERENCES my_class(id)
+);
+
+-- 插入数据
+INSERT INTO my_class VALUES (1,'班一'),(2,'班二');
+INSERT INTO my_student VALUES (1,'张三',1),(2,'李四',1),(3,'王五',2);
+-- 尝试插入一个班级ID不存在的学生
+-- INSERT INTO my_student VALUES (4,'赵六',3); -- ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails
+
+-- 尝试插入一个外键为空的学生
+INSERT INTO my_student VALUES (4,'钱七',NULL);
+```
+
+### 1.8.6. check
+
+check 用于强制行数据必须满足的条件。例如：在sal列上定义了check约束，并要求sal列值在1000~2000之间，如果不在1000~2000之间就会提示出错。
+
+> 注意： oracle 和 sql server 均支持check，但是mysql 5.7 目前还不支持 check ， 只做语法校验，但不会生效。
+
+``` SQL
+-- 语法
+列名 类型 check( check 条件 )
+```
+
+> *练习：*
+
+``` SQL
+CREATE TABLE t19 (
+  id INT PRIMARY KEY ,
+  `name` VARCHAR(32),
+  sex VARCHAR(6) CHECK (sex IN('man','woman')),
+  sal DECIMAL(7,2) CHECK (sal > 1000 AND sal < 2000)
+);
+-- 约束并没有生效
+INSERT INTO t19 VALUES (1,'FOO','m',900);
+```
+
+### 约束相关练习
+
+> *练习：*
+
+``` SQL
+/*
+商店售货表设计案例
+
+现有一个商店的数据库shop_db，记录客户及其购买情况，由下面三个表组成：
+商品goods (商品号goods_id，商品名goods_name，单价unit_price，商品类别category，供应商provider);
+客户customer(客户号customer_id，姓名name，住址address，电邮email，性别sex，身份证card_id);
+购买purchase(购买订单号order_id，客户号customer_id，商品号goods_id，购买数nums);
+
+1，建表，在定义中要求声明【进行合理设计】：
+（1），每个表的主外键；
+（2），客户的姓名不能为空值；
+（3），电邮不能重复；
+（4），客户的性别【男】【女】
+（5），单价unit_price 在 1.0 ～ 9999.99 之间
+*/
+
+CREATE DATABASE shop_db CHARACTER SET utf8mb4 COLLATE utf8mb4_bin ;
+
+USE shop_db;
+
+DROP TABLE IF EXISTS goods;
+CREATE TABLE goods (
+  goods_id INT UNSIGNED PRIMARY KEY COMMENT '商品号',
+  goods_name VARCHAR(32) NOT NULL COMMENT '商品名',
+  unit_price DECIMAL(6,2) COMMENT '单价' CHECK (unit_price>=1.0 AND unit_price<=9999.99) ,
+  category VARCHAR(32) COMMENT '商品类别',
+  `provider` VARCHAR(32) COMMENT '供应商'
+)  COMMENT '商品表';
+
+DROP TABLE IF EXISTS customer;
+CREATE TABLE customer (
+  customer_id INT UNSIGNED PRIMARY KEY COMMENT '客户号',
+  `name` VARCHAR(32) NOT NULL COMMENT '姓名',
+  `address` VARCHAR(32) COMMENT '住址',
+  `email` VARCHAR(32) UNIQUE COMMENT '电邮',
+  `sex` VARCHAR(32) COMMENT '性别' CHECK (`sex` IN ('男','女')) ,
+  `card_id` VARCHAR(32) COMMENT '身份证'
+) COMMENT '客户表';
+
+DROP TABLE IF EXISTS purchase;
+CREATE TABLE purchase (
+  order_id INT UNSIGNED PRIMARY KEY COMMENT '购买订单号',
+  customer_id INT UNSIGNED COMMENT '客户号',
+  goods_id INT UNSIGNED COMMENT '商品号',
+  nums INT UNSIGNED COMMENT '购买数',
+  FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+  FOREIGN KEY (goods_id) REFERENCES goods (goods_id)
+) COMMENT '购买表';
+```
+
+### 1.8.7. 自增长
 
 ## 1.9. 索引
 
