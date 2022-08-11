@@ -66,11 +66,12 @@
     - [1.8.1. primary key（主键）](#181-primary-key主键)
       - [1.8.1.1. 新增/删除/修改 主键](#1811-新增删除修改-主键)
     - [1.8.2. not null (非空)](#182-not-null-非空)
-    - [1.8.4. unique （唯一）](#184-unique-唯一)
-    - [1.8.5. foreign key (外键)](#185-foreign-key-外键)
-    - [1.8.6. check](#186-check)
-    - [约束相关练习](#约束相关练习)
-    - [1.8.7. 自增长](#187-自增长)
+    - [1.8.3. unique （唯一）](#183-unique-唯一)
+    - [1.8.4. foreign key (外键)](#184-foreign-key-外键)
+    - [1.8.5. check](#185-check)
+    - [1.8.6. 约束相关练习](#186-约束相关练习)
+    - [1.8.7. 自增长 auto_increment](#187-自增长-auto_increment)
+      - [1.8.7.1. 修改自增长开始值](#1871-修改自增长开始值)
   - [1.9. 索引](#19-索引)
     - [1.9.1. 唯一索引（UNIQUE）](#191-唯一索引unique)
     - [1.9.2. 普通索引（INDEXs）](#192-普通索引indexs)
@@ -1548,7 +1549,7 @@ ALTER TABLE t17_2 ADD PRIMARY KEY(`id`,`name`);
 
 如果在列上定义了`NOT NULL`，那么当插入数据时，必须为列提供数据。
 
-### 1.8.4. unique （唯一）
+### 1.8.3. unique （唯一）
 
 当定义了唯一约束后，该列值时不能重复的。
 
@@ -1577,7 +1578,7 @@ INSERT INTO t18 VALUES (NULL,'JERRY');
 
 ```
 
-### 1.8.5. foreign key (外键)
+### 1.8.4. foreign key (外键)
 
 foreign key (外键) 用于定义主表和从表之间的关系：外键约束要定义在从表上，主表则必须具有主键约束或事unique约束；当定义外键约束后，要求外键列数据必须在主表的主键列存在或是为null。
 
@@ -1619,7 +1620,7 @@ INSERT INTO my_student VALUES (1,'张三',1),(2,'李四',1),(3,'王五',2);
 INSERT INTO my_student VALUES (4,'钱七',NULL);
 ```
 
-### 1.8.6. check
+### 1.8.5. check
 
 check 用于强制行数据必须满足的条件。例如：在sal列上定义了check约束，并要求sal列值在1000~2000之间，如果不在1000~2000之间就会提示出错。
 
@@ -1643,7 +1644,7 @@ CREATE TABLE t19 (
 INSERT INTO t19 VALUES (1,'FOO','m',900);
 ```
 
-### 约束相关练习
+### 1.8.6. 约束相关练习
 
 > *练习：*
 
@@ -1698,7 +1699,58 @@ CREATE TABLE purchase (
 ) COMMENT '购买表';
 ```
 
-### 1.8.7. 自增长
+### 1.8.7. 自增长 auto_increment
+
+在某张表中，存在一个id列（整数），我们希望在添加记录的时候，该列从1开始，自动的增长，可以使用 auto_increment
+
+``` sql
+-- 语法
+字段名 类型 PRIMARY KEY AUTO_INCREMENT
+```
+
+- 使用细节
+  1. 一般来说自增长是和primary key 配合使用的；
+  2. 自增长也可以单独使用【但是需要配合一个unique】；
+  3. 自增长修饰的字段为整数型的（虽然小数也可以，但是非常非常少这样使用）；
+  4. 自增长默认从1开始，你也可以通过如下命令修改：`ALTER TABLE 表名 AUTO_INCREMENT = 新的开始值`；
+  5. 如果你添加数据时，给自增长字段（列）指定的有值，则以指定的值为准；
+
+> *练习：*
+
+``` SQL
+-- 创建表
+CREATE TABLE t20_auto_increment (
+  id INT PRIMARY KEY AUTO_INCREMENT ,
+  `name` VARCHAR(32) 
+);
+
+-- 插入数据
+-- 1，ID 为null 
+INSERT INTO t20_auto_increment VALUES (null,'Aoo'); -- 插入成功，id = 1
+-- 2，ID 不添加
+INSERT INTO t20_auto_increment (`name`) VALUES ('Aoo'); -- 插入成功，id = 2
+```
+
+#### 1.8.7.1. 修改自增长开始值
+
+``` SQL
+ALTER TABLE [表名] AUTO_INCREMENT = [开始值]
+```
+
+> *练习：*
+
+``` SQL
+-- 修改自增长开始值
+ALTER TABLE t20_auto_increment AUTO_INCREMENT = 100;
+
+-- 插入数据
+INSERT INTO t20_auto_increment (`name`) VALUES ('Coo'); -- 插入成功，id = 100
+
+-- 测试指定ID值，然后再插入一条不指定的值，看看结果
+INSERT INTO t20_auto_increment (id,`name`) VALUES (150,'Doo'); -- 插入成功，id = 150
+INSERT INTO t20_auto_increment (`name`) VALUES ('Eoo'); -- 插入成功，id = 151
+
+```
 
 ## 1.9. 索引
 
