@@ -73,9 +73,14 @@
     - [1.8.7. 自增长 auto_increment](#187-自增长-auto_increment)
       - [1.8.7.1. 修改自增长开始值](#1871-修改自增长开始值)
   - [1.9. 索引](#19-索引)
-    - [1.9.1. 唯一索引（UNIQUE）](#191-唯一索引unique)
-    - [1.9.2. 普通索引（INDEXs）](#192-普通索引indexs)
-    - [1.9.3. 全文索引](#193-全文索引)
+    - [1.9.1. 索引机制](#191-索引机制)
+    - [1.9.2. 索引的类型](#192-索引的类型)
+    - [1.9.3. 索引的使用](#193-索引的使用)
+      - [1.9.3.1. 创建索引](#1931-创建索引)
+      - [1.9.3.2. 删除索引](#1932-删除索引)
+      - [1.9.3.3. 查询索引](#1933-查询索引)
+      - [1.9.3.4. 索引练习](#1934-索引练习)
+    - [1.9.4. 创建索引的规则](#194-创建索引的规则)
   - [1.10. 事物](#110-事物)
 
 ## 1.1. MySQL安装和配置
@@ -1754,10 +1759,322 @@ INSERT INTO t20_auto_increment (`name`) VALUES ('Eoo'); -- 插入成功，id = 1
 
 ## 1.9. 索引
 
-### 1.9.1. 唯一索引（UNIQUE）
+说起提高数据库性能，索引是最物美价廉的东西了。不用加内存，不用改程序，不用调sql，查询速度就可能提高百倍千倍。
 
-### 1.9.2. 普通索引（INDEXs）
+> *练习：*
 
-### 1.9.3. 全文索引
+``` SQL
+-- 创建数据表，插入80W条数据进行测试
+
+-- 创建数据库
+CREATE DATABASE tmp CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+-- 切换数据库
+USE tmp;
+
+-- 创建 部门表
+DROP TABLE IF EXISTS `dept` ;
+CREATE TABLE `dept` (
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号',
+  dept_name VARCHAR(64) NOT NULL COMMENT '部门编号',
+  loc VARCHAR(64) NOT NULL COMMENT '位置'
+) COMMENT '部门表';
+
+-- 创建 雇员表
+DROP TABLE IF EXISTS `emp` ;
+CREATE TABLE `emp` (
+  emp_no INT UNSIGNED NOT NULL COMMENT '编号',
+  emp_name VARCHAR(64) NOT NULL COMMENT '名字',
+  job VARCHAR(64) NOT NULL COMMENT '工作',
+  mgr INT UNSIGNED COMMENT '上级编号',
+  hire_date DATE NOT NULL COMMENT '入职时间',
+  sal DECIMAL(7,2) NOT NULL COMMENT '薪水',
+  comm DECIMAL(7,2) COMMENT '红利',
+  dept_no INT UNSIGNED NOT NULL COMMENT '部门编号'
+) COMMENT '员工表';
+
+-- 创建 薪资级别表
+DROP TABLE IF EXISTS `sal_grade`;
+CREATE TABLE `sal_grade` (
+  grade INT UNSIGNED NOT NULL COMMENT '级别',
+  low_sal DECIMAL(7,2) NOT NULL COMMENT '最低工资',
+  hight_sal DECIMAL(7,2) NOT NULL COMMENT '最高工资'
+) COMMENT '工资级别表';
+
+-- 插入部门数据
+INSERT INTO `dept` VALUES 
+  (10,'ACCOUNTING','NEW YORK'),
+  (20,'RESEARCH','DALLAS'),
+  (30,'SALES','CHICAGO'),
+  (40,'OPERATIONS','BOSTON');
+
+-- 插入 薪资级别数据
+INSERT INTO `sal_grade` VALUES 
+  (1,700,1200),
+  (2,1201,1400),
+  (3,1401,2000),
+  (4,2001,3000),
+  (5,3001,9999);
+
+-- 插入 老板的雇员信息
+INSERT INTO `emp` VALUES (1001,'KING','PRESIDENT',NULL,'1991-11-17',5000,NULL,16) ;
+
+-- 创建一个函数，名字 rand_string, 可以随机返回指定的个数字符串
+-- 定义分隔符
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS rand_string $$
+
+CREATE  FUNCTION rand_string(n INT)
+RETURNS VARCHAR(255) -- 该函数会返回一个字符串
+BEGIN
+  DECLARE char_str VARCHAR(255) DEFAULT 'abcdefghijklmnopqrstuvwxyz';
+  DECLARE return_str VARCHAR(255) DEFAULT '';
+  DECLARE i INT DEFAULT 0;
+  WHILE i < n DO
+    SET return_str = CONCAT(return_str, SUBSTRING(char_str,FLOOR(1 + RAND() * 26), 1));
+    SET i = i + 1;
+  END WHILE;
+  RETURN return_str;
+END $$
+
+-- 还原分隔符
+DELIMITER ;
+
+-- 固定职位 'SALESMAN'
+-- 随机部门编号 FLOOR(1 + RAND()*5) * 10
+-- 随机薪资 FLOOR(1 + RAND()*4000)
+-- 随机红利 FLOOR(1 + RAND()*1000)
+
+-- 创建存储过程，可以添加雇员
+-- 定义分隔符
+DELIMITER $$
+CREATE PROCEDURE insert_emp(IN start_num INT(10), IN max_num INT(10))
+BEGIN
+  DECLARE i INT DEFAULT 0;
+  -- 设置 autocommit = 0 , 默认不提交sql语句
+  SET autocommit = 0;
+  REPEAT
+    SET i = i + 1;
+    -- 插入数据
+    INSERT INTO emp VALUES ((start_num+i), rand_string(6), 'SALESMAN', 1001, CURDATE(), FLOOR(1 + RAND()*4000), FLOOR(1 + RAND()*1000), FLOOR(1 + RAND()*5) * 10);
+  UNTIL i = MAX_NUM
+  END REPEAT;
+
+  -- 整体提交
+  COMMIT;
+END $$
+
+-- 执行存储过程
+CALL insert_emp(100001, 800000) $$
+
+-- 还原分隔符
+DELIMITER ;
+
+```
+
+> *练习：*
+
+``` SQL
+-- 测试 有索引 和 没有索引的情况下，查询的速度
+
+-- 在没有创建索引时，查询一条记录
+SELECT * FROM emp WHERE emp_no = 123456; -- 耗时：0.42 sec
+
+-- 使用索引来优化一下
+-- 在没有创建索引前， [mysql_server_dir]/data/tmp/emp.ibd 文件大小是 67m
+
+-- 创建索引; emp_no_index 是索引名称; emp (emp_no) ： 表示在 emp表的 emp_no列创建索引
+CREATE INDEX emp_no_index ON emp (emp_no);
+
+-- 在创建索引之后，[mysql_server_dir]/data/tmp/emp.ibd 文件大小是 79m ，很明显变大了。【索引本身也会占用空间】
+-- 创建索引后，再查询一条记录
+SELECT * FROM emp WHERE emp_no = 123456; -- 耗时：0.00 sec，速度明显提升s
+
+```
+
+### 1.9.1. 索引机制
+
+- 索引的原理
+  - 没有索引为什么会慢？
+    - 因为在没有索引的情况下，会进行全表扫描，查询速度慢。
+  - 使用索引为什么会快？
+    - 因为会形成一个索引的数据结构，比如：二叉树、b树、b+树
+  - 索引的代价
+    - 磁盘占用
+    - 对dml（update, delete, insert）语句的效率影响
+      - 进行 dml 操作后，索引的树会进行维护（更新），影响一定的效率
+
+### 1.9.2. 索引的类型
+
+- 索引的类型
+  - 主键索引，主键自动的为主索引 （类型 PRIMARY KEY）
+  - 唯一索引（UNIQUE）
+  - 普通索引（INDEX）
+  - 全文索引（FULLTEXT）[适用于MyISAM]
+    - 开发中考虑使用：全文搜索 Solr 和 ElasticSearch(ES)
+
+### 1.9.3. 索引的使用
+
+#### 1.9.3.1. 创建索引
+
+``` SQL
+-- 添加索引，方法一：
+CREATE [UNIQUE] INDEX index_name ON table_name (column_name [(length)] [ASC|DESC], ... );
+-- 添加索引，方法二：
+ALTER TABLE table_name ADD [UNIQUE] INDEX [index_name] (column_name, ...);
+-- 添加主键索引
+ALTER TABLE table_name ADD PRIMARY KEY (column_name, ...);
+```
+
+> *练习：*
+
+``` SQL
+-- 创建练习表
+CREATE TABLE t21_index (
+  id INT,
+  `name` VARCHAR(32)
+);
+
+-- 添加主键索引
+ALTER TABLE t21_index ADD PRIMARY KEY (id);
+
+-- 添加普通索引
+CREATE INDEX name_index ON t21_index (`name`);
+
+```
+
+#### 1.9.3.2. 删除索引
+
+``` SQL
+-- 删除索引，方法一：
+DROP INDEX index_name ON table_name;
+-- 删除索引，方法二：
+ALTER TABLE table_name DROP INDEX index_name;
+-- 删除主键索引
+ALTER TABLE table_name DROP PRIMARY KEY;
+```
+
+> *练习：*
+
+``` SQL
+-- 添加/删除 唯一索引
+-- 添加一列
+ALTER TABLE t21_index ADD COLUMN msg VARCHAR(32);
+-- 添加唯一索引
+ALTER TABLE t21_index ADD UNIQUE (msg);
+-- 查询索引名称【Key_name】
+SHOW INDEXES FROM t21_index;
+-- 删除唯一索引
+ALTER TABLE t21_index DROP INDEX msg;
+```
+
+#### 1.9.3.3. 查询索引
+
+``` SQL
+-- 查询表是否有索引
+-- 方法一：
+SHOW INDEX FROM table_name;
+-- 方法二：
+SHOW INDEXES FROM table_name;
+-- 方法三：
+SHOW KEYS FROM table_name;
+```
+
+#### 1.9.3.4. 索引练习
+
+> *练习：*
+
+``` SQL
+-- 创建一张订单表 index_test_order (ID,商品名，订购人，数量)。要求ID为主键。使用三种方式；
+
+-- 方法1:
+CREATE TABLE index_test_order1 (
+  id INT PRIMARY KEY,
+  goods_name VARCHAR(32),
+  orderer VARCHAR(32),
+  quantity INT UNSIGNED
+);
+-- 方法2:
+CREATE TABLE index_test_order2 (
+  id INT ,
+  goods_name VARCHAR(32),
+  orderer VARCHAR(32),
+  quantity INT UNSIGNED,
+  PRIMARY KEY(id)
+);
+-- 方法3:
+CREATE TABLE index_test_order3 (
+  id INT ,
+  goods_name VARCHAR(32),
+  orderer VARCHAR(32),
+  quantity INT UNSIGNED
+);
+ALTER TABLE index_test_order3 ADD PRIMARY KEY (id);
+
+```
+
+> *练习：*
+
+``` SQL
+-- 创建一张特价菜谱表menu（id号，菜名，厨师，点餐人身份证，价格）.
+-- 要求：id为为主键，点餐人身份证 是 unique 。 使用两种方式
+
+-- 方法1:
+CREATE TABLE index_test_menu1 (
+  id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  dish_name VARCHAR(32),
+  chef VARCHAR(32),
+  customer_card_id CHAR(18) UNIQUE,
+  price DECIMAL(6,2)
+);
+
+-- 方法2:
+CREATE TABLE index_test_menu2 (
+  id INT UNSIGNED ,
+  dish_name VARCHAR(32),
+  chef VARCHAR(32),
+  customer_card_id CHAR(18) ,
+  price DECIMAL(6,2)
+);
+
+ALTER TABLE index_test_menu2 ADD PRIMARY KEY (id);
+ALTER TABLE index_test_menu2 MODIFY id INT UNSIGNED AUTO_INCREMENT;
+ALTER TABLE index_test_menu2 ADD UNIQUE (customer_card_id);
+
+```
+
+> *练习：*
+
+``` SQL
+-- 创建一张运动员表sportman（id号，名字，特长）.
+-- 要求：id为为主键，名字 是 普通索引 。 使用两种方式
+
+-- 方法1：
+CREATE TABLE index_test_sportman1 (
+  id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `name` VARCHAR(32),
+  specialty VARCHAR(32)
+);
+CREATE INDEX name_index ON index_test_sportman1(`name`);
+
+-- 方法2：
+CREATE TABLE index_test_sportman2 (
+  id INT UNSIGNED,
+  `name` VARCHAR(32),
+  specialty VARCHAR(32)
+);
+
+ALTER TABLE index_test_sportman2 ADD PRIMARY KEY (id);
+ALTER TABLE index_test_sportman2 ADD INDEX name_index (`name`);
+```
+
+### 1.9.4. 创建索引的规则
+
+- 哪些列上适合使用索引
+  - 较频繁的作为查询条件字段应该创建索引。
+  - 唯一性太差的字段不适合单独创建索引，即使频繁作为查询条件。例如：性别
+  - 更新非常频繁的字段不适合创建索引。
+  - 不会出现在where子句中字段不该创建索引。
 
 ## 1.10. 事物
