@@ -81,7 +81,9 @@
       - [1.9.3.3. 查询索引](#1933-查询索引)
       - [1.9.3.4. 索引练习](#1934-索引练习)
     - [1.9.4. 创建索引的规则](#194-创建索引的规则)
-  - [1.10. 事物](#110-事物)
+  - [1.10. 事务](#110-事务)
+    - [1.10.1. 事务隔离级别](#1101-事务隔离级别)
+      - [设置事务隔离级别](#设置事务隔离级别)
 
 ## 1.1. MySQL安装和配置
 
@@ -2077,4 +2079,183 @@ ALTER TABLE index_test_sportman2 ADD INDEX name_index (`name`);
   - 更新非常频繁的字段不适合创建索引。
   - 不会出现在where子句中字段不该创建索引。
 
-## 1.10. 事物
+## 1.10. 事务
+
+- 什么是事务？
+  - 事务用于保证数据的一致性，它由一组相关的dml语句组成，该组的dml语句要么全部成功，要么全部失败。如：转账就要用事务来处理，用以保证数据的一致性。
+
+- 事务和锁
+  - 当执行事务操作时（dml语句），mysql会在表上加锁，防止其它用户改表的数据。这对用户来讲是非常重要的。
+
+- mysql 数据库控制台事务的几个重要操作
+  1. start transaction -- 开始一个事务
+  2. savepoint 保存点名 -- 设置保存点
+  3. rollback to 保存点名 -- 回退事务
+  4. rollback -- 回退全部事务
+  5. commit -- 提交事务，所有的操作生效，不能回退
+
+- 回退事务
+  - 在介绍回退事务前，先介绍一下保存点（savepoint）。保存点事事务中的点，用于取消部分事务，当结束事务时，会自动删除该事务所定义的所有保存点。当执行回退事务时，通过指定保存点可以回退到指定的点。
+
+- 提交事务
+  - 使用commit语句可以提交事务。当执行了commit语句之后，会确认事务的变化、结束事务、删除保存点、释放锁，数据生效。当使用commit语句结束事务之后，其它会话将可以查看到事务变化后到新数据。
+
+- 事务的细节
+  1. 如果不开始事务，默认情况下，dml操作时自动提交的，不能回滚；
+  2. 如果开始一个事务，你没有创建保存点。你可以执行rollback，默认就是回滚到你事务开始的状态；
+  3. 你也可以在这个事务中（还没有提交），创建多个保存点。比如：savepoint aaa； 执行dml； savepoint bbb;
+  4. 你可以在事务没有提交前，选择回退到哪个保存点。
+  5. mysql的事务机制需要innodb的存储引擎;myisam不好使。
+  6. 开始一个事务 start transaction , 或者 set autocommit = off; 
+
+> *练习：*
+
+``` SQL
+-- 1，创建一张表
+CREATE TABLE t22_transaction (
+ id INT,
+ `name` VARCHAR(32)
+);
+
+-- 2，开启事务
+START TRANSACTION;
+
+-- 3，设置保存点
+SAVEPOINT a;
+
+-- 执行dml操作
+INSERT INTO t22_transaction VALUES(100,'tom');
+
+-- 4，再设置保存点
+SAVEPOINT b;
+
+-- 执行dml操作
+INSERT INTO t22_transaction VALUES(200,'jack');
+
+-- 5，回退到 b
+ROLLBACK TO b;
+
+-- 6，继续回退到 a
+ROLLBACK TO a;
+
+-- 7，直接回退到事务开始状态
+ROLLBACK ;
+
+-- 8，提交事务
+INSERT INTO t22_transaction VALUES(300,'tom');
+COMMIT;
+```
+
+### 1.10.1. 事务隔离级别
+
+- 事务隔离级别介绍
+  1. 多个连接开启各自事务操作数据中数据时，数据库系统要负责隔离操作，以保证各个连接在获取数据时的准确性。
+  2. 如果不考虑隔离性，可能会引发如下问题：`脏读`、`不可重复读`、`幻读`。
+
+- 查看事务隔离级别
+  
+  ``` SQL
+  SELECT @@tx_isolation;
+  ```
+
+- 脏读（dirty read）：
+  - 当一个事务读取另一个事务尚未提交的修改时，产生脏读；
+
+- 不可重复读（nonrepeatable read）:
+  - 同一查询在同一事务中多次进行，由于其他提交事务所做的修改或删除，每次返回不同的结果集，此时发生不可重复读。
+
+- 幻读（phantom read）：
+  - 同一查询在同一事务中多次进行，由于其他提交事务所做的插入操作，每次返回不同的结果集，此时发生幻读。
+
+- 事务隔离级别
+  - 概念：mysql隔离级别定义了事务与事务之间的隔离程度。
+
+| mysql 隔离级别               | 脏读 | 不可重复读 | 幻读 | 加锁读 |
+| ---------------------------- | ---- | ---------- | ---- | ------ |
+| 读未提交（read uncommitted） | V    | V          | V    | 不加锁 |
+| 读已提交（read committed）   | X    | V          | V    | 不加锁 |
+| 可重复读（Repeatable read）  | X    | X          | X    | 不加锁 |
+| 可串行化（Serializable）     | X    | X          | X    | 加锁   |
+
+
+> *练习：*
+
+``` SQL
+-- 演示mysql的事务隔离级别
+
+-- 1. 开两个mysql的控制台
+
+-- 2. 查看当前mysql的隔离级别
+SELECT @@tx_isolation; -- 默认时 REPEATABLE-READ （可重复读）
+
+-- 3. 把其中一个控制台的隔离级别设置 
+SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+-- 两个控制台开启事务
+
+-- 4. 创建表
+CREATE TABLE `account` (
+  id INT,
+  `name` VARCHAR(32),
+  money INT
+);
+
+-- 5. 在隔离级别为（REPEATABLE-READ）终端，插入一条数据，且没有提交事务
+INSERT INTO account VALUES (100,'tom',1000);
+
+-- 6. 在隔离级别为（READ UNCOMMITTED）终端，查询到了刚刚插入到 tom 数据，此现象就是【脏读】
+
+-- 7. 隔离级别为（REPEATABLE-READ）终端，修改tom 的 money = 800，且不提交事务
+UPDATE account SET money=800 WHERE id = 100;
+
+INSERT INTO account VALUES (200,'jack',2000);
+
+
+-- ---
+
+INSERT INTO account VALUES (300,'scott',8000);
+
+-- 修改200的用户
+UPDATE account SET money=1800 WHERE id = 200;
+
+
+
+--- 
+INSERT INTO account VALUES (400,'milan',6000);
+UPDATE account SET money=100 WHERE id = 300;
+
+
+-- --
+INSERT INTO account VALUES (500,'terry',7000);
+UPDATE account SET money=900 WHERE id = 400;
+
+
+```
+
+#### 设置事务隔离级别
+
+1. 查看当前会话隔离级别
+
+   ``` SQL
+   SELECT @@tx_isolation;
+   ```
+
+2. 查看系统当前隔离级别
+
+   ``` SQL
+   SELECT @@global.tx_isolation;
+   ```
+
+3. 设置当前会话隔离级别
+
+   ``` SQL
+   SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+   ```
+
+4. 设置系统当前隔离级别
+
+   ``` SQL
+   SET GLOBAL TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+   ```
+
+5. mysql默认的事务隔离级别时 repeatable read，一般情况下，没有特殊要求，没有必要修改（因为该级别可以满足绝大部分项目需求）
