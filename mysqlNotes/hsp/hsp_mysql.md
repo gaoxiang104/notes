@@ -90,6 +90,16 @@
   - [1.12. 视图（View）](#112-视图view)
     - [1.12.1. 视图的使用](#1121-视图的使用)
     - [1.12.2. 视图的最佳实践](#1122-视图的最佳实践)
+  - [1.13. mysql管理](#113-mysql管理)
+    - [1.13.1. mysql用户管理](#1131-mysql用户管理)
+      - [1.13.1.1. 创建用户](#11311-创建用户)
+      - [1.13.1.2. 删除用户](#11312-删除用户)
+      - [1.13.1.3. 修改用户密码](#11313-修改用户密码)
+    - [1.13.2. mysql用户权限管理](#1132-mysql用户权限管理)
+      - [1.13.2.1. 给用户授权](#11321-给用户授权)
+      - [1.13.2.2. 回收用户权限](#11322-回收用户权限)
+      - [1.13.2.3. 权限生效指令](#11323-权限生效指令)
+    - [管理用户和权限综合练习](#管理用户和权限综合练习)
 
 ## 1.1. MySQL安装和配置
 
@@ -2465,3 +2475,149 @@ CREATE VIEW emp_view02 AS
     LEFT JOIN dept d ON e.dept_no = d.dept_no
     LEFT JOIN sal_grade s ON e.sal >= s.low_sal AND e.sal <= hight_sal;
 ```
+
+## 1.13. mysql管理
+
+### 1.13.1. mysql用户管理
+
+当在项目开发时，可以根据不同的开发人员，赋给他相应的mysql操作权限。可以根据需要创建不同的用户，赋给相应的权限，供人员使用。
+
+- mysql中的用户，都存储在系统数据库mysql中user表中：
+
+``` SQL
+-- 查看mysql中的用户
+SELECT * FROM mysql.user;
+```
+
+- 其中user表的重要字段说明：
+  - *host:* 允许登录的“位置”，localhost表示该用户只允许本机登录，也可以指定ip地址，比如：192.168.1.100；
+    - host 为 `%` 情况：
+       1. 在创建用户的时候，如果不指定host，则为`%`；`%`表示所有IP都有连接权限；
+       2. 可以这样指定：`CREATE USER 'xxx'@'192.168.1.%'` 表示 xxx用户在 192.168.1.* 的 IP可以登录mysql；
+       3. 在删除用户的时候，如果host不是%，需要明确指定 '用户'@'host值'；
+
+  - *user:* 用户名；
+  - *authentication:* 密码，通过mysql的password()函数加密之后的密码。
+  
+#### 1.13.1.1. 创建用户
+
+``` SQL
+CREATE USER '[用户名]'@'[允许登录位置]' IDENTIFIED BY '[密码]';
+-- 说明：创建用户，同时指定密码
+```
+
+> 练习：
+
+``` SQL
+CREATE USER 'xgo01'@'localhost' IDENTIFIED BY '1234';
+
+-- 查看
+SELECT host, user, authentication_string  FROM mysql.user;
+
+```
+
+#### 1.13.1.2. 删除用户
+
+``` SQL
+DROP USER '[用户名]'@'[允许登录位置]';
+```
+
+#### 1.13.1.3. 修改用户密码
+
+- 修改自己的密码：
+
+``` SQL
+SET PASSWORD = PASSWORD('[新密码]');
+```
+
+- 修改他人的密码（需要有修改用户密码权限）:
+  
+``` SQL
+SET PASSWORD FOR '[用户名]'@'[允许登录位置]' = PASSWORD('[新密码]');
+```
+
+### 1.13.2. mysql用户权限管理
+
+- mysql中的用户权限
+
+  ![mysql中的用户权限](./images/1.jpg)
+
+- mysql中用户权限分类
+
+  ![mysql中的用户权限](./images/2.jpg)
+
+#### 1.13.2.1. 给用户授权
+
+``` SQL
+-- 基本语法
+GRANT 权限列表 ON 库.对象名 TO '[用户名]'@'[允许登录位置]' [IDENTIFIED BY '密码']
+```
+
+- 说明：
+  1. 权限列表，多个权限用逗号分开;
+
+      ``` SQL
+      GRANT SELECT ON ...;
+      GRANT SELECT, DELETE, CREATE ON ...;
+      GRANT all [privileges] ON ...;  -- 表示赋予该用户在该对象上的所有权限
+      ```
+
+  2. 特别说明
+     - `*.*`：代表本系统中的所有数据库的所有对象（表，视图，存储过程）；
+     - `库.*`：表示某个数据库中的所有数据对象（表，视图，存储过程等）；
+
+  3. IDENTIFIED BY 可以省略，也可以写出
+     1. 如果用户存在，就修改该用户的密码；
+     2. 如果该用户不存在，就是创建该用户；
+
+#### 1.13.2.2. 回收用户权限
+
+``` SQL
+-- 基本语法
+REVOKE 权限列表 ON 库.对象名 FROM '[用户名]'@'[允许登录位置]'
+```
+
+#### 1.13.2.3. 权限生效指令
+
+``` SQL
+-- 如果权限没有生效，可以执行下面命令。
+-- 基本语法
+FLUSH PRIVILEGES;
+```
+
+### 管理用户和权限综合练习
+
+> 练习：
+
+``` SQL
+-- 1, 创建一个新用户，密码：123，并且只可以从本地登录，不让远程登录mysql
+-- root下操作
+CREATE USER 'xgo'@'localhost' IDENTIFIED BY '123';
+
+-- 2, 创建库：test_db , 创建表: news, 要求：使用root用户创建
+CREATE DATABASE test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+CREATE TABLE test_db.news (id INT PRIMARY KEY AUTO_INCREMENT, title VARCHAR(32));
+
+-- 3, 给用户分配查看 news 表 和添加数据的权限；
+-- root下操作
+GRANT SELECT,INSERT ON test_db.news TO 'xgo'@'localhost';
+
+-- 4, 测试看看用户是否只有这几个权限
+-- 新用户登录 mysql -u xgo -p123 -D test_db;
+SHOW TABLES; -- 可以看到到 news 表；
+-- 插入数据到 news 表
+INSERT INTO news VALUES (1,'Aaaa'); -- 成功
+-- 修改上面插入的数据
+UPDATE news SET title = 'Abbbb' WHERE id=1; -- 失败，ERROR 1142 (42000): UPDATE command denied to user 'xgo'@'localhost' for table 'news'
+
+-- 5, 修改密码为：abc，要求，使用root用户完成
+-- root下操作
+SET PASSWORD FOR 'xgo'@'localhost' = PASSWORD('abc');
+
+-- 6，重新登录，测试密码生效
+-- 重新登录 mysql -u xgo -p123 -D test_db
+
+-- 7， 使用 root 用户删除 新建用户
+DROP USER 'xgo'@'localhost';
+```
+
