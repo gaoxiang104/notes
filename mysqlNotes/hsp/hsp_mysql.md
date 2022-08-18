@@ -82,8 +82,11 @@
       - [1.9.3.4. 索引练习](#1934-索引练习)
     - [1.9.4. 创建索引的规则](#194-创建索引的规则)
   - [1.10. 事务](#110-事务)
-    - [1.10.1. 事务隔离级别](#1101-事务隔离级别)
-      - [设置事务隔离级别](#设置事务隔离级别)
+    - [1.10.1. 事务的acid特性](#1101-事务的acid特性)
+    - [1.10.2. 事务隔离级别](#1102-事务隔离级别)
+      - [1.10.2.1. 设置事务隔离级别](#11021-设置事务隔离级别)
+  - [1.11. 存储引擎](#111-存储引擎)
+    - [1.11.1. 修改存储引擎](#1111-修改存储引擎)
 
 ## 1.1. MySQL安装和配置
 
@@ -2146,7 +2149,14 @@ INSERT INTO t22_transaction VALUES(300,'tom');
 COMMIT;
 ```
 
-### 1.10.1. 事务隔离级别
+### 1.10.1. 事务的acid特性
+
+1. `原子性（Atomicity）`：是指事务是一个不可分割的工作单位，事务中的操作要么都发生，要么都不发生。
+2. `一致性（Consistency）`：事务必须使数据库从一个一致性状态变换到另一个一致性状态。
+3. `隔离性（Isolation）`：事务的隔离性是多个用户并发访问数据库时，数据库为每一个用户开启的事务，不能背其他事务的操作数据所干扰，多个并发事务之间要相互隔离。
+4. `持久性（Durability）`：持久性时指一个事务一旦被提交，它对数据库中数据的改变就是永久性的，接下来即使数据库发生故障也不应该对其有任何影响。
+
+### 1.10.2. 事务隔离级别
 
 - 事务隔离级别介绍
   1. 多个连接开启各自事务操作数据中数据时，数据库系统要负责隔离操作，以保证各个连接在获取数据时的准确性。
@@ -2232,7 +2242,7 @@ UPDATE account SET money=900 WHERE id = 400;
 
 ```
 
-#### 设置事务隔离级别
+#### 1.10.2.1. 设置事务隔离级别
 
 1. 查看当前会话隔离级别
 
@@ -2259,3 +2269,130 @@ UPDATE account SET money=900 WHERE id = 400;
    ```
 
 5. mysql默认的事务隔离级别时 repeatable read，一般情况下，没有特殊要求，没有必要修改（因为该级别可以满足绝大部分项目需求）
+
+6. 全局修改事务隔离级别
+
+``` mysql.ini
+# 全局修改事务隔离级别，修改mysql.ini配置文件
+
+# 可选参数有：READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, SERIALIZABLE
+
+[mysqld]
+transaction-isolation = REPEATABLE-READ;
+```
+
+> *练习：*
+
+``` SQL
+-- 1，登录mysql控制客户端a，创建表dog(id,name)，开始一个事务，添加两天记录；
+-- 2，登录mysql控制客户端b，开始一个事务，设置为读未提交；
+-- 3，a客户端修改dog表中的一条记录，不要提交。看看b客户端是否看到变化，说明什么问题？
+-- 4，登录mysql客户端c，开始一个事务，设置为读已提交，这时a客户端修改一条记录，不要提交，看看c客户端是否看到变化，说明为什么？
+
+-- 客户端a
+CREATE TABLE dog(id INT, `name` VARCHAR(32));
+
+START TRANSACTION;
+
+INSERT INTO dog VALUES (1,'Ben'),(2,'Jack');
+
+-- 客户端b  
+SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+START TRANSACTION;
+
+-- 客户端a,修改一条记录
+UPDATE dog SET `name`='Ben1' WHERE id=1;
+
+-- 客户端b , 可以看到 客户端a 刚刚修改的 记录， 产生了 脏读
+
+-- 客户端c 
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+START TRANSACTION;
+
+-- 客户端a,修改一条记录, 不提交
+UPDATE dog SET `name`='Jack1' WHERE id=2;
+-- 客户端c，看不到任何记录， 说明 READ-COMMITTED 解决了 脏读 问题；
+
+-- 客户端a，提交事务
+COMMIT;
+-- 客户端c，查询到了记录，产生了 可重复读 和 幻读 
+
+```
+
+## 1.11. 存储引擎
+
+- 基本介绍
+  1. MySQL的表类型由存储引擎（Storage Engines）决定，主要包括 MyISAM, InnoDB, Memory 等。
+  2. mysql 数据表主要支持六种类型，分别是： CSV, Memory, ARCHIVE, MRG MYISAM, MYISAM, InnoDB。
+  3. 这六种分为两类，一类是“事务安全型”（transaction-safe），比如：InnoDB； 其余都属于第二类，称为“非事务安全”（non-transaction-safe）[mysiam 和 memory].
+
+- 查看所有的存储引擎
+
+  ``` SQL
+  SHOW ENGINES;
+  ```
+
+- 主要等存储引擎/表类型特点
+
+  | 特点         | MyISAM | InnoDB          | Memory | Archive |
+  | ------------ | ------ | --------------- | ------ | ------- |
+  | 批量插入速度 | 高     | 低              | 高     | 非常高  |
+  | 事务安全     |        | 支持            |        |         |
+  | 全文索引     | 支持   | （5.7版本支持） |        |         |
+  | 锁机制       | 表锁   | 行锁            | 表锁   | 行锁    |
+  | 存储限制     | 没有   | 64TB            | 有     | 没有    |
+  | b树引擎      | 支持   | 支持            | 支持   |         |
+  | 哈希索引     |        | 支持            | 支持   |         |
+  | 集群索引     |        | 支持            |        |         |
+  | 数据缓存     |        | 支持            | 支持   |         |
+  | 索引缓存     | 支持   | 支持            | 支持   |         |
+  | 数据可压缩   | 支持   |                 |        | 支持    |
+  | 空间使用     | 低     | 高              | N/A    | 非常低  |
+  | 内存使用     | 低     | 高              | 中等   | 低      |
+  | 支持外键     |        | 支持            |        |         |
+
+- 细节说明
+  - MyISAM 不支持事务、也不支持外键，但其访问速度快，对事务完整性没有要求；
+  - InnoDB 存储引擎提供了具有提交、回滚和崩溃恢复能力对事务安全。但是比起MyISAM存储引擎，InnoDB写的处理效率差一些并且会占用更多的磁盘空间以暴力数据和索引。
+  - Memory 存储引擎使用存在内存中的内容来创建表。每个Memory 表只实际对应一个磁盘文件。 Memory 类型的表访问速度非常快，因为它的数据是放在内存中的，并且默认使用hash索引。但是一旦服务关闭，表中的数据就会丢失掉，表的结构还在。
+
+- 常用三种存储引擎表使用案例
+
+> 练习：
+
+``` SQL
+
+-- 1, InnoDB 存储引擎，特点：支持事务，支持外键，支持行及锁
+
+-- 2，MyISAM 存储引擎 , 特点： 添加速度快，不支持事务和外键，支持表级锁
+CREATE TABLE t23_myisam (
+  id INT,
+  `name` VARCHAR(32)
+) ENGINE MYISAM;
+
+-- 测试myISAM事务
+START TRANSACTION;
+INSERT INTO t23_myisam VALUES (100,'tom');
+ROLLBACK; -- 测试结果：无法回滚，不支持事务
+
+-- 3，Memory 存储引擎，特点：数据存储在内存中， 执行速度很快
+CREATE TABLE t24_memory (
+  id INT,
+  `name` VARCHAR(32)
+) ENGINE MEMORY;
+-- 插入数据
+INSERT INTO t24_memory VALUES (100,'tom');
+-- 重启mysql服务，再查看改表数据
+
+```
+
+- 如何选择表的存储引擎
+  1. 如果你的应用不需要事务，处理的只是基本的CRUD操作，那么MyISAM是不二选择，速度快。
+  2. 如果需要支持事务，选择InnoDB;
+  3. Memory 存储引擎就是将数据存储在内存中，由于没有磁盘I/O的等待，速度极快。但由于是内存存储引擎，所做的任何修改在服务区重启后都将消失。（经典用法 用户的在线状态）；
+
+### 1.11.1. 修改存储引擎
+
+``` SQL
+ALTER TABLE table_name ENGINE = engine_name;
+```
