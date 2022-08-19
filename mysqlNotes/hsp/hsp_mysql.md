@@ -1170,6 +1170,7 @@ SELECT LEAST(1,2,3,0.5) ; -- 0.5
 | UNIX_TIMESTAMP()                        | 返回1970-1-1 到现在的秒数                         |
 | FROM_UNIXTIME()                         | 可以把一个unix_timestamp 秒数，转成指定格式的日期 |
 | DATE_FORMAT(date,format)                | 日期格式化，返回一个string                        |
+| LAST_DAY(date)                          | 返回参数date所在月份的最后一天                    |
 
 
 - 说明
