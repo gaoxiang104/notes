@@ -88,4 +88,30 @@ SELECT * FROM emp WHERE INSTR(emp_name, 'A') <> 0;
 --    (13) 以年月日的方式显示所有员工的服务年限.(大概)
 SELECT emp_name, FLOOR(DATEDIFF(now(),hire_date) / 356) AS 'year', FLOOR(DATEDIFF(now(),hire_date) %365 /30) AS 'MONTH', FLOOR(DATEDIFF(now(),hire_date) %30) AS 'day' FROM emp;
 
+-- 9，根据：emp员工表，dept部门表，工资=薪金+佣金写出正确SQL homework04.sql 10min
+--    (1) 列出至少有一个员工的所有部门
+SELECT e.dept_no, COUNT(e.dept_no) FROM emp e GROUP BY e.dept_no HAVING COUNT(e.dept_no) > 0;
+--    (2) 列出薪金比“SMITH”多的所有员工。
+SELECT * FROM emp e WHERE e.sal > (SELECT e1.sal FROM emp e1 WHERE e1.emp_name = 'SMITH');
+--    (3) 列出受雇日期晚于其直接上级的所有员工。
+SELECT e1.*,e2.hire_date AS mgr_hire_date FROM emp e1 LEFT JOIN emp e2 ON e1.mgr = e2.emp_no WHERE e1.hire_date > e2.hire_date;
+--    (4) 列出部门名称和这些部门的员工信息，同时列出那些没有员工的部门。
+SELECT * FROM dept d LEFT JOIN emp e ON d.dept_no = e.dept_no;
+--    (5) 列出所有“CLERK”（办事员）的姓名及其部门名称。
+SELECT e.emp_name, d.dept_name FROM emp e LEFT JOIN dept d ON e.dept_no = d.dept_no WHERE e.job='CLERK';
+--    (6) 列出最低薪金大于1500的各种工作。
+SELECT job, MIN(sal) AS min_sal FROM emp  GROUP BY job HAVING min_sal > 1500; 
+--    (7) 列出在部门“SALES”（销售部）工作的员工的姓名。
+SELECT e.emp_name, d.dept_name FROM emp e LEFT JOIN dept d ON e.dept_no = d.dept_no WHERE d.dept_name='SALES';
+--    (8) 列出薪金高于公司平均薪金的所有员工。
+SELECT * FROM emp WHERE sal > (SELECT AVG(sal) FROM emp);
+--    (9) 列出与“SCOTT”从事相同工作的所有员工。
+--    (10) 列出薪金高于在部门30工作的所有员工的薪金的员工姓名和薪金。
+--    (11) 列出在每个部门工作的员工数量、平均工资和平均服务期限。
+--    (12) 列出所有员工的姓名、部门名称和工资。
+--    (13) 列出所有部门的详细信息和部门人数。
+--    (14) 列出各种工作的最低工资。
+--    (15) 列出MANAGER（经理）的最低薪金。
+--    (16) 列出所有员工的年工资,按年薪从低到高排序。
+
 ```
