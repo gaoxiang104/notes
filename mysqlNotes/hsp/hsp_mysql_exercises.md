@@ -88,7 +88,7 @@ SELECT * FROM emp WHERE INSTR(emp_name, 'A') <> 0;
 --    (13) 以年月日的方式显示所有员工的服务年限.(大概)
 SELECT emp_name, FLOOR(DATEDIFF(now(),hire_date) / 356) AS 'year', FLOOR(DATEDIFF(now(),hire_date) %365 /30) AS 'MONTH', FLOOR(DATEDIFF(now(),hire_date) %30) AS 'day' FROM emp;
 
--- 9，根据：emp员工表，dept部门表，工资=薪金+佣金写出正确SQL homework04.sql 10min
+-- 8，根据：emp员工表，dept部门表，工资=薪金+佣金写出正确SQL homework04.sql 10min
 --    (1) 列出至少有一个员工的所有部门
 SELECT e.dept_no, COUNT(e.dept_no) FROM emp e GROUP BY e.dept_no HAVING COUNT(e.dept_no) > 0;
 --    (2) 列出薪金比“SMITH”多的所有员工。
@@ -105,13 +105,116 @@ SELECT job, MIN(sal) AS min_sal FROM emp  GROUP BY job HAVING min_sal > 1500;
 SELECT e.emp_name, d.dept_name FROM emp e LEFT JOIN dept d ON e.dept_no = d.dept_no WHERE d.dept_name='SALES';
 --    (8) 列出薪金高于公司平均薪金的所有员工。
 SELECT * FROM emp WHERE sal > (SELECT AVG(sal) FROM emp);
+
 --    (9) 列出与“SCOTT”从事相同工作的所有员工。
+SELECT * FROM emp WHERE job = (SELECT job FROM emp WHERE emp_name='SCOTT');
 --    (10) 列出薪金高于在部门30工作的所有员工的薪金的员工姓名和薪金。
+SELECT emp_name, sal FROM emp WHERE sal > (SELECT MAX(sal) FROM emp WHERE dept_no = 30);
 --    (11) 列出在每个部门工作的员工数量、平均工资和平均服务期限。
+SELECT dept_no, COUNT(emp_no) AS count_num,FLOOR(AVG(sal + IFNULL(comm,0))) AS avg_sal, FLOOR(AVG(DATEDIFF(NOW(),hire_date))) AS avg_day FROM emp GROUP BY dept_no;
 --    (12) 列出所有员工的姓名、部门名称和工资。
+SELECT e.emp_name, d.dept_name, sal + IFNULL(comm,0) AS all_sal FROM emp e LEFT JOIN dept d ON e.dept_no = d.dept_no ;
 --    (13) 列出所有部门的详细信息和部门人数。
+SELECT d.*, (SELECT COUNT(*) FROM emp e WHERE e.dept_no = d.dept_no) AS count_num FROM dept d;
 --    (14) 列出各种工作的最低工资。
+SELECT job, MIN(sal + IFNULL(comm,0)) AS min_sal FROM emp GROUP BY job;
 --    (15) 列出MANAGER（经理）的最低薪金。
+SELECT MIN(sal), job FROM emp WHERE job='MANAGER';
 --    (16) 列出所有员工的年工资,按年薪从低到高排序。
+SELECT emp_name, 12 * (sal + IFNULL(comm,0)) AS year_sal FROM emp ORDER BY year_sal;
+
+```
+
+> 综合练习：
+
+``` SQL
+-- 设学校环境如下:一个系有若干个专业，每个专业一年只招一个班，每个班有若干个学生。现要建立关于系、学生、班级的数据库，关系模式为：
+--    (1) 系 DEPARTMENT（系号dept_id，系名dept_name）
+--    (2) 班CLASS（班号class_id，专业名subject，系号dept_id，入学年份enroll_time，人数num)
+--    (3) 学生STUDENT（学号student_id，姓名name，年龄age，班号class_id)
+--    (4) 建表要求： 1)，每个表的主外键；2)，dept_name是唯一约束；3)，学生姓名不能为空；
+
+-- 1. 建表
+CREATE DATABASE university CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+USE university;
+
+DROP TABLE IF EXISTS department;
+CREATE TABLE department (
+    dept_id CHAR(3) PRIMARY KEY COMMENT '系号',
+    dept_name VARCHAR(32) UNIQUE NOT NULL COMMENT '系名'
+) COMMENT '系';
+
+DROP TABLE IF EXISTS class;
+CREATE TABLE class (
+    class_id CHAR(4) PRIMARY KEY COMMENT '班号',
+    `subject` VARCHAR(32) NOT NULL COMMENT '专业名',
+    enroll_time YEAR NOT NULL COMMENT '入学年份',
+    num INT(3) NOT NULL DEFAULT 0 COMMENT '人数',
+    dept_id CHAR(3) NOT NULL COMMENT '系号',
+    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
+) COMMENT '班';
+
+DROP TABLE IF EXISTS student;
+CREATE TABLE student (
+    student_id CHAR(4) PRIMARY KEY COMMENT '学号',
+    `name` VARCHAR(32) NOT NULL COMMENT '姓名',
+    age INT(3) UNSIGNED NOT NULL COMMENT '年龄',
+    class_id CHAR(4) NOT NULL COMMENT '班号',
+    FOREIGN KEY (class_id) REFERENCES class(class_id)
+) COMMENT '学生';
+
+-- 2. 插入数据
+INSERT INTO department VALUES 
+    ('001','数学'),
+    ('002','计算机'),
+    ('003','化学'),
+    ('004','中文'),
+    ('005','经济');
+
+INSERT INTO class VALUES 
+    ('101','软件',1995,20,'002'),
+    ('102','微电子',1996,30,'002'),
+    ('111','无机化学',1995,29,'003'),
+    ('112','高分子化学',1996,25,'003'),
+    ('121','统计数学',1995,20,'001'),
+    ('131','现代语言',1996,20,'004'),
+    ('141','国际贸易',1997,30,'005'),
+    ('142','国际金融',1996,14,'005');
+
+INSERT INTO student VALUES 
+    ('8101','张三',18,'101'),
+    ('8102','钱四',16,'121'),
+    ('8103','王玲',17,'131'),
+    ('8105','李飞',19,'102'),
+    ('8109','赵四',18,'141'),
+    ('8110','李可',20,'142'),
+    ('8201','张飞',18,'111'),
+    ('8302','周瑜',16,'112'),
+    ('8203','王亮',17,'111'),
+    ('8305','董庆',19,'102'),
+    ('8409','赵龙',18,'101'),
+    ('8510','李丽',20,'142');
+
+SELECT * FROM department;
+SELECT * FROM class;
+SELECT * FROM student;
+
+-- 3. 完成以下查询功能
+--    (1) 找出所有李姓的学生。
+SELECT * FROM student WHERE `name` LIKE '李%';
+--    (2) 找出所有开设超过1个专业的系的名字。
+SELECT d.*, t.c FROM department d INNER JOIN (SELECT dept_id, COUNT(*) AS c FROM class GROUP BY dept_id HAVING c > 1) t ON d.dept_id = t.dept_id;
+--    (3) 找出人数大于等于30的系的编号和名字。
+SELECT d.*, t.c FROM department d INNER JOIN (SELECT dept_id, SUM(num) AS c FROM class GROUP BY dept_id HAVING c > 30) t ON d.dept_id = t.dept_id;
+
+-- 4. 学校又新增了一个物理系，编号为066
+INSERT INTO department VALUES ('006','物理');
+
+-- 5. 学生张三退学，请更新相关的表
+START TRANSACTION;
+UPDATE class SET num = num - 1 WHERE class_id = (SELECT class_id FROM student WHERE student_id = '8101');
+DELETE FROM student WHERE student_id = '8101';
+COMMIT;
 
 ```
