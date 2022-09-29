@@ -1,7 +1,7 @@
 package pers.gx.p9;
 
 /**
- * 斐波那契数列
+ * 猴子吃桃问题：
  */
 public class MonkeyEatingPeach {
     public static void main (String args[]) {
