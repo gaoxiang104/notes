@@ -1,6 +1,6 @@
 package org.gx.onjava.chapter04_operators;
 
-public class AutoInc {
+public class AutoInc { // 自动增长
     public static void main(String args[]) {
         int i = 1;
         System.out.println("i: " + i); // i: 1
