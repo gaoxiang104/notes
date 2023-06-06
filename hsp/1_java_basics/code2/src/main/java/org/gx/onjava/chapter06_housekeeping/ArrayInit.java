@@ -16,5 +16,5 @@ public class ArrayInit {
     static void f(String... args){
         System.out.println("f()");
     }
-    
+
 }
