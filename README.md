@@ -5,6 +5,7 @@
 ## 2. 读书笔记
 
 * [Java编程思想](./readingNotes/Thinking%20in%20Java)
+* [On Java](./readingNotes/On%20Java/README.md)
 * [鸟哥的 Linux 私房菜 -- 基础](./readingNotes/鸟哥Linux)
 
 ## 3. 学习笔记
