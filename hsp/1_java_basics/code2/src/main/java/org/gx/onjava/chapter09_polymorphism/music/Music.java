@@ -16,7 +16,7 @@ public class Music {
     public static void main(String[] args) {
 //        Wind flute = new Wind();
 //        tune(flute); // 向上转型
-        
+
         // 在数组填充时会向上转型：
         Instrument[] orchestra = {
                 new Wind(),
