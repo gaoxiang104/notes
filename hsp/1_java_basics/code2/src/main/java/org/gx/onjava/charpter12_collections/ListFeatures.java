@@ -36,6 +36,10 @@ class PetCreator {
         }
         return result;
     }
+
+    public Pet[] array(int length){
+        return list(length).toArray(new Pet[]{});
+    }
 }
 
 class Hamster extends Pet {
