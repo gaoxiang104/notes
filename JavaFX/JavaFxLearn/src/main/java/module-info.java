@@ -5,4 +5,5 @@ module pers.xgo.javafxlearn {
     opens pers.xgo.javafxlearn to javafx.fxml;
     exports pers.xgo.javafxlearn;
     exports pers.xgo.javafxlearn.learn001;
+    exports pers.xgo.javafxlearn.learn002;
 }
