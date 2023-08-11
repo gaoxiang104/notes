@@ -15,7 +15,7 @@
     - [1.1.8. Audio](#118-audio)
     - [1.1.9. Video](#119-video)
     - [1.1.10. WebView](#1110-webview)
-  - [application 的声明周期](#application-的声明周期)
+  - [1.2. application 的声明周期](#12-application-的声明周期)
 
 ## 1.1. JavaFX Overview
 
@@ -142,7 +142,7 @@ JavaFX包含一个能够显示网页（HTML5、CSS等）的WebView组件。JavaF
 
 WebView组件可以将桌面应用程序与web应用程序混合使用。有时候这是有用的。例如，如果你已经有了一个不错的网络应用程序，但需要一些只有桌面应用程序才能合理提供的功能，比如磁盘访问、与HTTP以外的其他网络协议（如UDP、IAP等）的通信。
 
-## application 的声明周期
+## 1.2. application 的声明周期
 
 通过下面的代码，观察 application 的 `声明周期` ：
 
@@ -190,3 +190,4 @@ WebView组件可以将桌面应用程序与web应用程序混合使用。有时�
 生命周期图，如下：
 
 ![Application-life-cycle](imgs/Application-life-cycle.png)
+
