@@ -1,10 +1,8 @@
 package pers.xgo.onjava.chapter14_streams;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class SpecialCollector {
     public static void main(String[] args) throws IOException {
