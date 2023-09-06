@@ -32,6 +32,9 @@
         <configuration>
           <source>17</source>
           <target>17</target>
+          <compilerArguments>
+            <arg>-ea</arg>
+          </compilerArguments>
         </configuration>
       </plugin>
       <plugin>
