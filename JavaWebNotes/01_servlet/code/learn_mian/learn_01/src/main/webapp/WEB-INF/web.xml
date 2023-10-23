@@ -4,4 +4,19 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+  <!--web.xml 主要用来配置该 web 应用使用到的 servlet
+    1. servlet-name：给 servlet 取名，该名字唯一
+    2. servlet-class：servlet 的类的全路径：Tomcat 在反射生成该 servlet 需要使用
+    3. url-pattern: 这个就是该 servlet 访问的 URL 的配置（路径）
+   -->
+
+  <!-- 配置HelloServlet -->
+  <servlet>
+    <servlet-name>HelloServlet</servlet-name>
+    <servlet-class>org.xgo.learn.servlet.controller.HelloServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>HelloServlet</servlet-name>
+    <url-pattern>/helloServlet</url-pattern>
+  </servlet-mapping>
 </web-app>
