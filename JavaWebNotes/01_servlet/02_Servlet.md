@@ -9,6 +9,8 @@
     - [2.5.1. Servlet 装载](#251-servlet-装载)
     - [2.5.2. 处理浏览器请求（service方法）](#252-处理浏览器请求service方法)
     - [2.5.3. 销毁 （destroy）](#253-销毁-destroy)
+  - [2.6. GET 和 POST 分发处理](#26-get-和-post-分发处理)
+  - [2.7. 总结](#27-总结)
 
 ## 2.1. 什么是 Servlet
 
@@ -166,3 +168,74 @@
 ### 2.5.3. 销毁 （destroy）
 
 - 当 web 应用被终止，或者 Servlet 容器终止运行，或者 Servlet 类重新装载时，会调用 `destroy()` 方法；
+
+## 2.6. GET 和 POST 分发处理
+
+- 开发 Servlet ，通常编写 `doGet`、`doPost` 方法。来对表单的 `get` 和 `post` 请求进行分发处理；
+
+- 例如下面的注册案例，通过 `向下转型` 将 `ServletRequest` 转成子类 `HttpServletRequest` ，获取 `Request.method` ，根据 `method` 类型执行 `doGet()` 或 `doPost()` 方法 ：
+
+  - register.html
+
+    ``` html
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+    <h2>注册</h2>
+    <form method="post" action="http://localhost:8180/learn_01/registerServlet">
+        <span>用户名：</span><input name="name" type="text"> </br>
+        <button type="submit">立即注册</button>
+    </form>
+    </body>
+    </html>
+    ```
+
+  - web.xml
+
+    ``` xml
+    <!-- web.xml -->
+    <servlet>
+        <servlet-name>RegisterServlet</servlet-name>
+        <servlet-class>org.xgo.learn.servlet.controller.RegisterServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RegisterServlet</servlet-name>
+        <url-pattern>/registerServlet</url-pattern>
+    </servlet-mapping>
+    ```
+
+  - RegisterServlet.java
+
+    ``` java
+    public class RegisterServlet implements Servlet {
+        // ....
+        @Override
+        public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException {
+            System.out.println("RegisterServlet.service()");
+            HttpServletRequest httpServletRequest = (HttpServletRequest)servletRequest;
+            if ("get".equalsIgnoreCase(httpServletRequest.getMethod())){
+                doGet();
+            } else if("post".equalsIgnoreCase(httpServletRequest.getMethod())){
+                doPost();
+            }
+        }
+
+        private void doGet(){
+            System.out.println("doGet()");
+        }
+
+        private void doPost(){
+            System.out.println("doPost()");
+        }
+        // ....
+    }
+    ```
+
+## 2.7. 总结
+
+- 通过 Servlet 的学习，了解 Servlet 相关开发规范；
+- 后面可以通过使用 Servlet 的继承类 `HttpServlet` 进行开发 Servlet；
