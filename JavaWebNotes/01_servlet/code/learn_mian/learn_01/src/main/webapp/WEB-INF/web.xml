@@ -14,6 +14,8 @@
   <servlet>
     <servlet-name>HelloServlet</servlet-name>
     <servlet-class>org.xgo.learn.servlet.controller.HelloServlet</servlet-class>
+    <!-- 表示tomcat启动时，自动装载该Servlet -->
+    <load-on-startup>1</load-on-startup>
   </servlet>
   <servlet-mapping>
     <servlet-name>HelloServlet</servlet-name>

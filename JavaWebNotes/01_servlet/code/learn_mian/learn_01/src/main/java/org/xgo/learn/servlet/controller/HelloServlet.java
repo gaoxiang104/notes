@@ -39,11 +39,12 @@ public class HelloServlet implements Servlet {
      */
     @Override
     public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException {
-        System.out.println("HelloServlet.service()");
+        System.out.print("HelloServlet.service() : ");
+        System.out.printf("Thread_id_%s" , Thread.currentThread().getId());
+        System.out.println();
         try (PrintWriter writer = servletResponse.getWriter()) {
             writer.print("<h3>Hello Servlet !!!!</h3>");
         }
-        servletResponse.setContentType("text/html");
     }
 
     /**
