@@ -5,6 +5,8 @@
   - [3.2. Servlet 注意事项和细节](#32-servlet-注意事项和细节)
   - [3.3. Servlet 注解方式](#33-servlet-注解方式)
     - [3.3.1. 注解的工作原理简单模拟：](#331-注解的工作原理简单模拟)
+  - [3.4 Servlet urlPattern 匹配方式](#34-servlet-urlpattern-匹配方式)
+    - [3.4.1. Servlet URL 匹配注意事项](#341-servlet-url-匹配注意事项)
 
 ## 3.1. HttpServlet 介绍
 
@@ -77,3 +79,52 @@ public class TestAnnotationServlet {
     }
 }
 ```
+
+## 3.4 Servlet urlPattern 匹配方式
+
+- 精确匹配
+  - 配置路径：`@WebServlet("/ok/zs")`
+  - 访问路径：`localhost:8080/[应用名]/ok/zs`
+
+- 目录匹配
+  - 配置路径：`@WebServlet("/ok/*")`
+  - 访问路径：
+    - `localhost:8080/[应用名]/ok/[任意]`
+    - `localhost:8080/[应用名]/ok/aa/bb` ：多级也是可以的
+
+- 扩展名匹配
+  - 配置路径：`@WebServlet("*.action")` ，注意，不带 `/`
+  - 访问路径：
+    - `localhost:8080/[应用名]/ok/aa.action`
+    - `localhost:8080/[应用名]/ok/aa/bb.action`
+
+- 任意匹配
+  - 配置路径：`@WebServlet("/*")` 或 `@WebServlet("/")`
+  - 访问路径：`localhost:8080/[应用名]/xx.do`
+
+### 3.4.1. Servlet URL 匹配注意事项
+
+- 当 Servlet 匹配了 `/` 或 `/*` ，会覆盖 tomcat 的 DefaultServlet ，当其他的 `url-pattern` 都匹配不上时，都会走这个 `Servlet` ，这样可以拦截到其他静态资源;
+
+- `DefaultServlet` 是帮助我们<u>**加载静态资源**</u>的，一旦拦截，静态资源不能处理；
+
+    ``` xml
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>listings</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    ```
+
+- 当 Servlet 配置类 `/` 或 `/*` ，表示可以匹配任意访问路径 ；
+- 提示：建议不要使用 `/` 或 `/*` ，建议尽量使用 `精确匹配` ；
+- 优先级遵守：精确匹配 > 目录匹配 > 扩展名匹配 > 任意匹配 ；
+
