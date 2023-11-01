@@ -58,4 +58,22 @@
     <servlet-name>DogServlet</servlet-name>
     <url-pattern>/work/dog</url-pattern>
   </servlet-mapping>
+  
+  <!-- 配置 DBServlet -->
+  <servlet>
+    <servlet-name>DBServlet</servlet-name>
+    <servlet-class>org.xgo.learn.servlet.controller.servletconfig.DBServlet</servlet-class>
+    <init-param>
+      <param-name>username</param-name>
+      <param-value>root</param-value>
+    </init-param>
+    <init-param>
+      <param-name>pwd</param-name>
+      <param-value>1234</param-value>
+    </init-param>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DBServlet</servlet-name>
+    <url-pattern>/dbServlet</url-pattern>
+  </servlet-mapping>
 </web-app>

@@ -88,9 +88,22 @@
 | 502     | Bad Gateway (网关错误)              |
 | 503     | Service Unavailable (服务不可用)      |
 
+- 说明：
+  - 302 举例：
+    - 浏览器请求 `T1Servlet`
+    - `T1Servlet` 返回 302 的状态码，并且指定浏览器重定向到 `h1.html`
+    - 浏览器发出第二次请求 `hi.html`
+
+  - 304 说明：
+    - 当我们请求资源时，服务器会返回该资源的最近修改时间 `Last-Modified: Thu, 13 Jun 2019 08:34:05 GMT` ;
+    - 如果浏览器禁用缓存，这个 `Last-Modified` 信息就没有使用，浏览器就每次要求返回该资源；
+    - 如果浏览器没有禁用缓存，服务器就会比较时间，如果服务器的资源更新，就会返回该资源，如果发现没有修改，就返回 `304 状态码` （但是不会返回该资源）；
+
 参考链接：[https://www.runoob.com/http/http-status-codes.html](https://www.runoob.com/http/http-status-codes.html)
 
 ## 4.4. MIME 类型
+
+- MIME 是 HTTP 协议中数据类型。 MIME 类型的格式时 “大类型/小类型”；
 
 | MIME类型                     | 描述                                         |
 |-----------------------------|--------------------------------------------|
