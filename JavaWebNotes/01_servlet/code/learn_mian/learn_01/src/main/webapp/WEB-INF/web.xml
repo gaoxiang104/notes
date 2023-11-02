@@ -10,6 +10,15 @@
     3. url-pattern: 这个就是该 servlet 访问的 URL 的配置（路径）
    -->
 
+  <context-param>
+    <param-name>website</param-name>
+    <param-value>https://www.xgo.pub</param-value>
+  </context-param>
+  <context-param>
+    <param-name>company</param-name>
+    <param-value>xgo</param-value>
+  </context-param>
+  
   <!-- 配置HelloServlet -->
   <servlet>
     <servlet-name>HelloServlet</servlet-name>
