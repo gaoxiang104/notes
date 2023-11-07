@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+    <style>
+        ul {
+            list-style-type: none;
+        }
+
+        textarea {
+            width: 200px;
+            height: 100px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .mr5 {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+<form method="post" action="/learn_01/work03/register">
+    <ul>
+        <li><span class="title">用户注册信息</span></li>
+        <li>
+            <span>用户名称：</span>
+            <span><input type="text" name="name"/></span>
+        </li>
+        <li>
+            <span>用户密码：</span>
+            <span><input type="password" name="password"/></span>
+        </li>
+        <li>
+            <span>确认密码：</span>
+            <span><input type="password" name="confirmPwd"/></span>
+        </li>
+        <li>
+            <span>请选中你喜欢的运动项目：</span>
+            <span class="mr5"><input type="checkbox" name="sport" value="篮球"/>篮球</span>
+            <span class="mr5"><input type="checkbox" name="sport" value="足球"/>足球</span>
+            <span><input type="checkbox" name="sport" value="排球"/>排球</span>
+        </li>
+        <li>
+            <span>请选中你的性别：</span>
+            <span class="mr5"><input type="radio" name="gender" value="男"/>男</span>
+            <span><input type="radio" name="gender" value="女"/>女</span>
+        </li>
+        <li>
+            <span>请选中你喜欢的城市：</span>
+            <span>
+            <select name="favoriteCity">
+                <option>--请选中--</option>
+                <option value="北京">北京</option>
+                <option value="上海">上海</option>
+                <option value="南京">南京</option>
+            </select>
+        </span>
+        </li>
+        <li>
+            <span>自我介绍：</span>
+            <span><textarea name="intro"></textarea></span>
+        </li>
+        <li>
+            <span>选中你喜欢的文件<input type="file"></span>
+        </li>
+        <li>
+            <button type="submit">提交</button>
+            <button type="reset">重制</button>
+        </li>
+    </ul>
+</form>
+</body>
+</html>
