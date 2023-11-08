@@ -107,6 +107,8 @@ public class RequestServlet extends HttpServlet {
 
 ## 7.5. 请求转发
 
+![08.png](./imgs/08.png)
+
 ### 7.5.1. 为什么需要请求转发
 
 - 实际开发中，往往业务比较复杂，需要子啊一次请求中，使用到多个 Servlet 完成一个任务（Servlet链，流水作业）；
