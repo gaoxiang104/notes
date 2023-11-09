@@ -1,0 +1,17 @@
+ul {
+    list-style-type: none;
+}
+
+textarea {
+    width: 200px;
+    height: 100px;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.mr5 {
+    margin-right: 5px;
+}
