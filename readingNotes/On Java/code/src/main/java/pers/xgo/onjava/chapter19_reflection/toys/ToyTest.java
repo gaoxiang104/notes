@@ -52,7 +52,8 @@ public class ToyTest {
         Class up = c.getSuperclass(); // 父类
         Object obj = null;
         try {
-            obj = up.getConstructor().newInstance();
+            //obj = up.getConstructor().newInstance();
+            obj = up.getDeclaredConstructor().newInstance();
             printInfo(obj.getClass());
         } catch (Exception e) {
             throw new RuntimeException("Cannot instantiate");
