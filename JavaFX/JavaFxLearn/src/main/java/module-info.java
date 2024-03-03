@@ -11,4 +11,5 @@ module pers.xgo.javafxlearn {
     exports pers.xgo.javafxlearn.learn002;
     exports pers.xgo.javafxlearn.d02;
     exports pers.xgo.javafxlearn.d03;
+    exports pers.xgo.javafxlearn.d04;
 }
