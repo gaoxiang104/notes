@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?import pers.xgo.javafxlearn.d05.CreateObjByFactory?>
+<CreateObjByFactory
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        fx:factory="instance"/>
