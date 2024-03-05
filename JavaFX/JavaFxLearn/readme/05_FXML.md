@@ -15,6 +15,13 @@
   - [FXML命名空间](#fxml命名空间)
   - [FXML 元素 ID](#fxml-元素-id)
   - [FXML 事件处理程序](#fxml-事件处理程序)
+  - [FXML CSS 样式](#fxml-css-样式)
+  - [FXML 控制器类](#fxml-控制器类)
+    - [在 FXML 中指定控制器类](#在-fxml-中指定控制器类)
+    - [在 FXMLLoader 上设置控制器实例](#在-fxmlloader-上设置控制器实例)
+    - [将 JavaFX 组件绑定到控制器字段](#将-javafx-组件绑定到控制器字段)
+    - [引用控制器中的方法](#引用控制器中的方法)
+    - [从FXMLLoader获取控制器实例](#从fxmlloader获取控制器实例)
 
 ## 关于 FXML
 
@@ -250,3 +257,158 @@ public void start(Stage primaryStage) throws IOException {
 
 - 为了定义事件处理程序，您需要使用脚本元素。 FXML 脚本元素的外观如下：
 
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            prefHeight="400.0" prefWidth="600.0" >
+    <Label fx:id="label" text="Button not click"/>
+    <Button fx:id="button" text="Click me!"  onAction="reactToClick()"/>
+
+    <!-- fx:script 已被废弃 -->
+    <fx:script>
+        function reactToClick(){
+            label.setText("Button clicked")
+        }
+    </fx:script>
+</VBox>
+
+```
+
+- JavaFX Script：JavaFX 最初提供的脚本语言，与 JavaFX 紧密集成。它具有类似于 Java 的语法，但添加了一些特定于 JavaFX 的语法和功能。尽管 JavaFX Script 已经被弃用，但仍然可以在一些旧的项目中使用。
+
+## FXML CSS 样式
+
+- 可以对 FXML 文件中声明的 JavaFX 组件进行样式设置。您可以通过 style在 FXML 元素中嵌入一个元素来实现此目的。以下是在 FXML 文件中设置 JavaFX 按钮 CSS 样式的示例：
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      prefHeight="400.0" prefWidth="600.0">
+
+
+    <Button fx:id="button" text="Click me!" style="
+        -fx-min-width: 90px;
+        -fx-min-height: 55px;
+        -fx-border-width: 3px;
+        -fx-border-color: red;
+    "></Button>
+</VBox>
+```
+
+## FXML 控制器类
+
+- 您可以为 FXML 文档设置控制器类。 FXML 控制器类可以将 FXML 文件中声明的 GUI 组件绑定在一起，使控制器对象充当中介（设计模式）。
+
+- 有两种方法可以为 FXML 文件设置控制器。 设置控制器的
+  - 第一种方法是在 FXML 文件中指定它。 
+  - 第二种方法是在用于加载 FXML 文档的 FXMLLoader 实例上设置控制器类的实例。 
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      prefHeight="400.0"
+      prefWidth="600.0"
+      alignment="CENTER"
+      fx:controller="pers.xgo.javafxlearn.d05.FXMLController">
+    <Label fx:id="label1" text="Button not click"/>
+    <Button fx:id="button" text="Click me!" onAction="#reactToClick"/>
+</VBox>
+
+```
+
+``` java
+public class FXMLController extends Application {
+
+    @FXML
+    private Label label1;
+    @FXML
+    private Button button;
+
+    public static void main(String[] args) {
+        System.out.println(FXMLDemo01.class.getResource(""));
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(FXMLDemo01.class.getResource("FXMLController.fxml"));
+        VBox vbox = fxmlLoader.load();
+        Scene scene = new Scene(vbox);
+        primaryStage.setScene(scene);
+        primaryStage.setWidth(300);
+        primaryStage.setHeight(250);
+        primaryStage.show();
+    }
+
+    @FXML
+    public void reactToClick(){
+        label1.setText("Button clicked");
+    }
+}
+```
+
+### 在 FXML 中指定控制器类
+
+- 如上面的代码，控制器类是使用 `fx:controller` 属性在 FXML 文件的根元素中指定的。
+
+
+### 在 FXMLLoader 上设置控制器实例
+
+- 在 上设置控制器实例时，FXMLLoader您必须首先创建控制器类的实例，然后在 上设置该实例FXMLLoader。以下是在实例上设置控制器实例的示例FXMLLoader：
+
+``` java
+MyFxmlController controller = new MyFxmlController();
+
+FXMLLoader loader = new FXMLLoader();
+loader.setController(controller);
+```
+
+### 将 JavaFX 组件绑定到控制器字段
+
+- 您可以将 FXML 文件中的 JavaFX 组件绑定到控制器类中的字段。 要将 JavaFX 组件绑定到控制器类中的字段，您需要为 JavaFX 组件的 FXML 元素提供一个 `fx:id` 属性，该属性具有要绑定到的控制器`字段的名称`作为值。 这是一个示例控制器类：
+
+``` java
+//  <Label fx:id="label1" text="Button not click"/>
+// fx:id="label1" 对应：label1
+@FXML
+private Label label1;
+```
+
+
+### 引用控制器中的方法
+
+- 可以从 FXML 引用控制器实例中的方法。例如，您可以将 JavaFX GUI 组件的事件绑定到控制器的方法。以下是将 JavaFX 组件的事件绑定到控制器中的方法的示例：
+
+``` java
+// <Button fx:id="button" text="Click me!" onAction="#reactToClick"/>
+// onAction="#reactToClick" 对应 reactToClick()， 注意添加 # 号
+@FXML
+public void reactToClick(){
+    label1.setText("Button clicked");
+}
+```
+
+- `@FXML` 此注释将该方法标记为 FXML 绑定的目标。
+
+### 从FXMLLoader获取控制器实例
+
+- 一旦FXMLLoader实例加载了 FXML 文档，您就可以通过该方法获取对控制器实例的引用FXMLLoader getController()。这是一个例子：
+
+``` java
+MyFxmlController controllerRef = loader.getController();
+```

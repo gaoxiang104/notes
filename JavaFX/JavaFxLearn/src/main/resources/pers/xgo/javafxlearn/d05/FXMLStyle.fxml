@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="$CONTROLLER_NAME$"
-            prefHeight="400.0" prefWidth="600.0" >
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      prefHeight="400.0" prefWidth="600.0" style="-fx-spacing: 15px;">
 
-</AnchorPane>
+    <Button fx:id="button" text="Click me!" style="
+        -fx-min-width: 90px;
+        -fx-min-height: 55px;
+        -fx-border-width: 3px;
+        -fx-border-color: red;
+    "></Button>
+    <Button fx:id="button2" text="Click me!" style="
+        -fx-min-width: 90px;
+        -fx-min-height: 55px;
+        -fx-border-width: 3px;
+        -fx-border-color: #093;
+    "></Button>
+</VBox>

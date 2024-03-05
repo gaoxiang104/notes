@@ -5,6 +5,7 @@ module pers.xgo.javafxlearn {
     requires com.github.kwhat.jnativehook;
 
     opens pers.xgo.javafxlearn to javafx.fxml;
+    opens pers.xgo.javafxlearn.d05 to javafx.fxml;
 
     exports pers.xgo.javafxlearn;
     exports pers.xgo.javafxlearn.learn001;
