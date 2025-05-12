@@ -25,8 +25,8 @@
 
 ``` xml
 <web-app>
-  <servlet>
-    <servlet-name>DBServlet</servlet-name>
+    <servlet>
+      <servlet-name>DBServlet</servlet-name>
     <servlet-class>org.xgo.learn.servlet.controller.servletconfig.DBServlet</servlet-class>
     <init-param>
       <param-name>username</param-name>
