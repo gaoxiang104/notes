@@ -38,11 +38,11 @@
 
 | 命令                                    | 解释                                                                   | 命令案例                     |
 | --------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- |
-| docker-compose up                       | 启动 Docker Compose 服务，并根据 docker-compose.yml 文件创建和启动容器 | docker compose up -d         |
-| docker-compose down                     | 停止并删除由 docker-compose 创建的容器、网络等资源                     | docker compose down          |
-| docker-compose build                    | 根据 docker-compose.yml 构建镜像                                       | docker compose build         |
-| docker-compose exec <service> <command> | 在指定服务的容器内执行命令                                             | docker compose exec web bash |
-| docker-compose logs                     | 查看 Docker Compose 容器的日志                                         | docker compose logs          |
+| docker compose up                       | 启动 Docker Compose 服务，并根据 docker-compose.yml 文件创建和启动容器 | docker compose up -d         |
+| docker compose down                     | 停止并删除由 docker-compose 创建的容器、网络等资源                     | docker compose down          |
+| docker compose build                    | 根据 docker-compose.yml 构建镜像                                       | docker compose build         |
+| docker compose exec <service> <command> | 在指定服务的容器内执行命令                                             | docker compose exec web bash |
+| docker compose logs                     | 查看 Docker Compose 容器的日志                                         | docker compose logs          |
 
 ### 1.2.2. docker-compose 使用案例
 
